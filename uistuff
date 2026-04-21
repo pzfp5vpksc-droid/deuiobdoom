@@ -920,10 +920,9 @@ local function createList(option, parent, holder)
 		self.callback(value)
 	end
 
--- 👇 ADD THIS RIGHT HERE
 function option:Refresh(newValues)
-    for , v in next, content:GetChildren() do
-        if v:IsA("TextLabel") then
+    for _, v in next, content:GetChildren() do
+        if v:IsA("TextButton") or v:IsA("TextLabel") then
             v:Destroy()
         end
     end
@@ -931,7 +930,7 @@ function option:Refresh(newValues)
     valueCount = 0
     self.values = newValues or self.values
 
-    for , value in next, self.values do
+    for _, value in next, self.values do
         self:AddValue(tostring(value))
     end
 
