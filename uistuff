@@ -1,1664 +1,1836 @@
-local _0x0005 = {_0x0006 = {}, _0x0007 = {}, _0x0008 = true}
-local _0x000a = _0x000b:_0x000c.char(82, 117, 110, 83, 101, 114, 118, 105, 99, 101)
-local _0x000d = _0x000b:_0x000c.char(84, 119, 101, 101, 110, 83, 101, 114, 118, 105, 99, 101)
-local _0x000e = _0x000b:_0x000c.char(84, 101, 120, 116, 83, 101, 114, 118, 105, 99, 101)
-local _0x000f = _0x000b:_0x000c.char(85, 115, 101, 114, 73, 110, 112, 117, 116, 83, 101, 114, 118, 105, 99, 101)
-local _0x0002 = _0x0010._0x0011._0x0012
-local _0x0014, _0x0015, _0x0016, _0x0017, _0x0018
-local function _0x001a(_0x001b, _0x001c)
-_0x001c = _0x001c or 1
-local _0x001d = math.floor(_0x001b/_0x001c + (math._0x001e(_0x001b) * 0.5)) * _0x001c
-if _0x001d < 0 then
-_0x001d = _0x001d + _0x001c
+-- Tora isme ui mod :refresh
+ 
+local library = {flags = {}, windows = {}, open = true}
+ 
+--Services
+local runService = game:GetService"RunService"
+local tweenService = game:GetService"TweenService"
+local textService = game:GetService"TextService"
+local inputService = game:GetService"UserInputService"
+local ui = Enum.UserInputType.MouseButton1
+--Locals
+local dragging, dragInput, dragStart, startPos, dragObject
+ 
+--Functions
+local function round(num, bracket)
+	bracket = bracket or 1
+	local a = math.floor(num/bracket + (math.sign(num) * 0.5)) * bracket
+	if a < 0 then
+		a = a + bracket
+	end
+	return a
 end
-return _0x001d
+ 
+local function keyCheck(x,x1)
+	for _,v in next, x1 do
+		if v == x then
+			return true
+		end
+	end
 end
-local function _0x001f(_0x0020,_0x0021)
-for _0x0022,_0x0023 in next, _0x0021 do
-if _0x0023 == _0x0020 then
-return true
+ 
+local function update(input)
+	local delta = input.Position - dragStart
+	local yPos = (startPos.Y.Offset + delta.Y) < -36 and -36 or startPos.Y.Offset + delta.Y
+	dragObject:TweenPosition(UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos), "Out", "Quint", 0.1, true)
 end
-end
-end
-local function _0x0024(_0x0025)
-local _0x0026 = _0x0025._0x0027 - _0x0016
-local _0x0028 = (_0x0017._0x0029._0x002a + _0x0026._0x0029) < -36 and -36 or _0x0017._0x0029._0x002a + _0x0026._0x0029
-_0x0018:_0x002b(_0x002c._0x002d(_0x0017._0x002e._0x002f, _0x0017._0x002e._0x002a + _0x0026._0x002e, _0x0017._0x0029._0x002f, _0x0028), string.char(79, 117, 116), string.char(81, 117, 105, 110, 116), 0.1, true)
-end
-local _0x003d
-local _0x003e = 5
-_0x003f(function()
-while _0x0040() do
-_0x003d = _0x0041._0x0042(_0x0043() % _0x003e / _0x003e, 1, 1)
-end
+ 
+--From: https://devforum.roblox.com/t/how-to-create-a-simple-rainbow-effect-using-tweenService/221849/2
+local chromaColor
+local rainbowTime = 5
+spawn(function()
+	while wait() do
+		chromaColor = Color3.fromHSV(tick() % rainbowTime / rainbowTime, 1, 1)
+	end
 end)
-function _0x0005:_0x0044(_0x0045, _0x0046)
-_0x0046 = _0x0047(_0x0046) == string.char(116, 97, 98, 108, 101) and _0x0046 or {}
-local _0x0048 = _0x0049._0x002d(_0x0045)
-for _0x004a, _0x004b in next, _0x0046 do
-_0x0048[_0x004a] = _0x004b
+ 
+function library:Create(class, properties)
+	properties = typeof(properties) == "table" and properties or {}
+	local inst = Instance.new(class)
+	for property, value in next, properties do
+		inst[property] = value
+	end
+	return inst
 end
-return _0x0048
+ 
+local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
+	local size = subHolder and 34 or 40
+	parentTable.main = library:Create("ImageButton", {
+		LayoutOrder = subHolder and parentTable.position or 0,
+		Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20),
+		Size = UDim2.new(0, 230, 0, size),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.04,
+		ClipsDescendants = true,
+		Parent = parent
+	})
+ 
+	local round
+	if not subHolder then
+		round = library:Create("ImageLabel", {
+			Size = UDim2.new(1, 0, 0, size),
+			BackgroundTransparency = 1,
+			Image = "rbxassetid://3570695787",
+			ImageColor3 = parentTable.open and (subHolder and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)) or (subHolder and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)),
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(100, 100, 100, 100),
+			SliceScale = 0.04,
+			Parent = parentTable.main
+		})
+	end
+ 
+	local title = library:Create("TextLabel", {
+		Size = UDim2.new(1, 0, 0, size),
+		BackgroundTransparency = subHolder and 0 or 1,
+		BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+		BorderSizePixel = 0,
+		Text = holderTitle,
+		TextSize = subHolder and 16 or 17,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = parentTable.main
+	})
+ 
+	local closeHolder = library:Create("Frame", {
+		Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.new(-1, 0, 1, 0),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundTransparency = 1,
+		Parent = title
+	})
+ 
+	local close = library:Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, -size - 10, 1, -size - 10),
+		Rotation = parentTable.open and 90 or 180,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://4918373417",
+		ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30),
+		ScaleType = Enum.ScaleType.Fit,
+		Parent = closeHolder
+	})
+ 
+	parentTable.content = library:Create("Frame", {
+		Position = UDim2.new(0, 0, 0, size),
+		Size = UDim2.new(1, 0, 1, -size),
+		BackgroundTransparency = 1,
+		Parent = parentTable.main
+	})
+ 
+	local layout = library:Create("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = parentTable.content
+	})
+ 
+	layout.Changed:connect(function()
+		parentTable.content.Size = UDim2.new(1, 0, 0, layout.AbsoluteContentSize.Y)
+		parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size)
+	end)
+ 
+	if not subHolder then
+		library:Create("UIPadding", {
+			Parent = parentTable.content
+		})
+ 
+		title.InputBegan:connect(function(input)
+			if input.UserInputType == ui then
+				dragObject = parentTable.main
+				dragging = true
+				dragStart = input.Position
+				startPos = dragObject.Position
+			elseif input.UserInputType == Enum.UserInputType.Touch then
+				dragObject = parentTable.main
+				dragging = true
+				dragStart = input.Position
+				startPos = dragObject.Position
+			end
+		end)
+		title.InputChanged:connect(function(input)
+			if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+				dragInput = input
+			elseif dragging and input.UserInputType == Enum.UserInputType.Touch then
+				dragInput = input
+			end
+		end)
+			title.InputEnded:connect(function(input)
+			if input.UserInputType == ui then
+				dragging = false
+			elseif input.UserInputType == Enum.UserInputType.Touch then
+				dragging = false
+			end
+		end)
+	end
+ 
+	closeHolder.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			parentTable.open = not parentTable.open
+			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
+			if subHolder then
+				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
+			else
+				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
+			end
+			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			parentTable.open = not parentTable.open
+			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
+			if subHolder then
+				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
+			else
+				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
+			end
+			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
+		end
+	end)
+ 
+	function parentTable:SetTitle(newTitle)
+		title.Text = tostring(newTitle)
+	end
+ 
+	return parentTable
 end
-local function _0x004c(_0x004d, _0x004e, _0x004f, _0x0050)
-local _0x0051 = _0x0050 and 34 or 40
-_0x004f._0x0052 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 66, 117, 116, 116, 111, 110), {
-_0x0053 = _0x0050 and _0x004f._0x0054 or 0,
-_0x0027 = _0x002c._0x002d(0, 20 + (250 * (_0x004f._0x0054 or 0)), 0, 20),
-_0x0055 = _0x002c._0x002d(0, 230, 0, _0x0051),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.04,
-_0x005f = true,
-_0x0060 = _0x004e
-})
-local _0x001a
-if not _0x0050 then
-_0x001a = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0055 = _0x002c._0x002d(1, 0, 0, _0x0051),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x004f._0x0008 and (_0x0050 and _0x0041._0x0059(16, 16, 16) or _0x0041._0x0059(10, 10, 10)) or (_0x0050 and _0x0041._0x0059(10, 10, 10) or _0x0041._0x0059(6, 6, 6)),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.04,
-_0x0060 = _0x004f._0x0052
-})
+ 
+local function createLabel(option, parent)
+	local main = library:Create("TextLabel", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 26),
+		BackgroundTransparency = 1,
+		Text = " " .. option.text,
+		TextSize = 17,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = parent.content
+	})
+ 
+	setmetatable(option, {__newindex = function(t, i, v)
+		if i == "Text" then
+			main.Text = " " .. tostring(v)
+		end
+	end})
 end
-local _0x0061 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0055 = _0x002c._0x002d(1, 0, 0, _0x0051),
-_0x0056 = _0x0050 and 0 or 1,
-_0x0062 = _0x0041._0x0059(10, 10, 10),
-_0x0063 = 0,
-_0x0064 = _0x004d,
-_0x0065 = _0x0050 and 16 or 17,
-_0x0066 = _0x0010._0x0066._0x0067,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x004f._0x0052
-})
-local _0x0069 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x0027 = _0x002c._0x002d(1, 0, 0, 0),
-_0x0055 = _0x002c._0x002d(-1, 0, 1, 0),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x0056 = 1,
-_0x0060 = _0x0061
-})
-local _0x006c = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x006d = _0x006e._0x002d(0.5, 0.5),
-_0x0027 = _0x002c._0x002d(0.5, 0, 0.5, 0),
-_0x0055 = _0x002c._0x002d(1, -_0x0051 - 10, 1, -_0x0051 - 10),
-_0x006f = _0x004f._0x0008 and 90 or 180,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 52, 57, 49, 56, 51, 55, 51, 52, 49, 55),
-_0x0058 = _0x004f._0x0008 and _0x0041._0x0059(50, 50, 50) or _0x0041._0x0059(30, 30, 30),
-_0x005a = _0x0010._0x005a._0x0070,
-_0x0060 = _0x0069
-})
-_0x004f._0x0071 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x0027 = _0x002c._0x002d(0, 0, 0, _0x0051),
-_0x0055 = _0x002c._0x002d(1, 0, 1, -_0x0051),
-_0x0056 = 1,
-_0x0060 = _0x004f._0x0052
-})
-local _0x0072 = _0x0005:_0x0044(string.char(85, 73, 76, 105, 115, 116, 76, 97, 121, 111, 117, 116), {
-_0x0073 = _0x0010._0x0073._0x0053,
-_0x0060 = _0x004f._0x0071
-})
-_0x0072._0x0074:_0x0075(function()
-_0x004f._0x0071._0x0055 = _0x002c._0x002d(1, 0, 0, _0x0072._0x0076._0x0029)
-_0x004f._0x0052._0x0055 = #_0x004f._0x0077 > 0 and _0x004f._0x0008 and _0x002c._0x002d(0, 230, 0, _0x0072._0x0076._0x0029 + _0x0051) or _0x002c._0x002d(0, 230, 0, _0x0051)
+ 
+function createToggle(option, parent)
+	local main = library:Create("TextLabel", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 31),
+		BackgroundTransparency = 1,
+		Text = " " .. option.text,
+		TextSize = 17,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = parent.content
+	})
+ 
+	local tickboxOutline = library:Create("ImageLabel", {
+		Position = UDim2.new(1, -6, 0, 4),
+		Size = UDim2.new(-1, 10, 1, -10),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = option.state and Color3.fromRGB(255, 65, 65) or Color3.fromRGB(100, 100, 100),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local tickboxInner = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 2, 0, 2),
+		Size = UDim2.new(1, -4, 1, -4),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = option.state and Color3.fromRGB(255, 65, 65) or Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = tickboxOutline
+	})
+ 
+	local checkmarkHolder = library:Create("Frame", {
+		Position = UDim2.new(0, 4, 0, 4),
+		Size = option.state and UDim2.new(1, -8, 1, -8) or UDim2.new(0, 0, 1, -8),
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		Parent = tickboxOutline
+	})
+ 
+	local checkmark = library:Create("ImageLabel", {
+		Size = UDim2.new(1, 0, 1, 0),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://4919148038",
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		Parent = checkmarkHolder
+	})
+ 
+	local inContact
+	main.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			option:SetState(not option.state)
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			option:SetState(not option.state)
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not option.state then
+				tweenService:Create(tickboxOutline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(140, 140, 140)}):Play()
+			end
+		end
+	end)
+ 
+	main.InputEnded:connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not option.state then
+				tweenService:Create(tickboxOutline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			end
+		end
+	end)
+ 
+	function option:SetState(state)
+		library.flags[self.flag] = state
+		self.state = state
+		checkmarkHolder:TweenSize(option.state and UDim2.new(1, -8, 1, -8) or UDim2.new(0, 0, 1, -8), "Out", "Quad", 0.2, true)
+		tweenService:Create(tickboxInner, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = state and Color3.fromRGB(255, 65, 65) or Color3.fromRGB(20, 20, 20)}):Play()
+		if state then
+			tweenService:Create(tickboxOutline, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+		else
+			if inContact then
+				tweenService:Create(tickboxOutline, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(140, 140, 140)}):Play()
+			else
+				tweenService:Create(tickboxOutline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			end
+		end
+		self.callback(state)
+	end
+ 
+	if option.state then
+		delay(1, function() option.callback(true) end)
+	end
+ 
+	setmetatable(option, {__newindex = function(t, i, v)
+		if i == "Text" then
+			main.Text = " " .. tostring(v)
+		end
+	end})
+end
+ 
+function createButton(option, parent)
+	local main = library:Create("TextLabel", {
+		ZIndex = 2,
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 34),
+		BackgroundTransparency = 1,
+		Text = " " .. option.text,
+		TextSize = 17,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = parent.content
+	})
+ 
+	local round = library:Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, -12, 1, -10),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(40, 40, 40),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local inContact
+	local clicking
+	main.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			library.flags[option.flag] = true
+			clicking = true
+			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			option.callback()
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			library.flags[option.flag] = true
+			clicking = true
+			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			option.callback()
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+		end
+	end)
+ 
+	main.InputEnded:connect(function(input)
+		if input.UserInputType == ui then
+			clicking = false
+			if inContact then
+				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			else
+				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			clicking = false
+			if inContact then
+				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			else
+				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+			end
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = false
+			if not clicking then
+				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+			end
+		end
+	end)
+end
+ 
+local function createBind(option, parent)
+	local binding
+	local holding
+	local loop
+	local text = string.match(option.key, "Mouse") and string.sub(option.key, 1, 5) .. string.sub(option.key, 12, 13) or option.key
+ 
+	local main = library:Create("TextLabel", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 33),
+		BackgroundTransparency = 1,
+		Text = " " .. option.text,
+		TextSize = 17,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = parent.content
+	})
+ 
+	local round = library:Create("ImageLabel", {
+		Position = UDim2.new(1, -6, 0, 4),
+		Size = UDim2.new(0, -textService:GetTextSize(text, 16, Enum.Font.Gotham, Vector2.new(9e9, 9e9)).X - 16, 1, -10),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(40, 40, 40),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local bindinput = library:Create("TextLabel", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = text,
+		TextSize = 16,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = round
+	})
+ 
+	local inContact
+	main.InputBegan:connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not binding then
+				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end
+		end
+	end)
+ 
+	main.InputEnded:connect(function(input)
+		if input.UserInputType == ui then
+			binding = true
+			bindinput.Text = "..."
+			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			binding = true
+			bindinput.Text = "..."
+			tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = false
+			if not binding then
+				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+			end
+		end
+	end)
+ 
+	inputService.InputBegan:connect(function(input)
+		if inputService:GetFocusedTextBox() then return end
+		if (input.KeyCode.Name == option.key or input.UserInputType.Name == option.key) and not binding then
+			if option.hold then
+				loop = runService.Heartbeat:connect(function()
+					if binding then
+						option.callback(true)
+						loop:Disconnect()
+						loop = nil
+					else
+						option.callback()
+					end
+				end)
+			else
+				option.callback()
+			end
+		elseif binding then
+			local key
+			pcall(function()
+				if not keyCheck(input.KeyCode, blacklistedKeys) then
+					key = input.KeyCode
+				end
+			end)
+			pcall(function()
+				if keyCheck(input.UserInputType, whitelistedMouseinputs) and not key then
+					key = input.UserInputType
+				end
+			end)
+			key = key or option.key
+			option:SetKey(key)
+		end
+	end)
+ 
+	inputService.InputEnded:connect(function(input)
+		if input.KeyCode.Name == option.key or input.UserInputType.Name == option.key or input.UserInputType.Name == "MouseMovement" then
+			if loop then
+				loop:Disconnect()
+				loop = nil
+				option.callback(true)
+			end
+		end
+	end)
+ 
+	function option:SetKey(key)
+		binding = false
+		if loop then
+			loop:Disconnect()
+			loop = nil
+		end
+		self.key = key or self.key
+		self.key = self.key.Name or self.key
+		library.flags[self.flag] = self.key
+		if string.match(self.key, "Mouse") then
+			bindinput.Text = string.sub(self.key, 1, 5) .. string.sub(self.key, 12, 13)
+		else
+			bindinput.Text = self.key
+		end
+		tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = inContact and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)}):Play()
+		round.Size = UDim2.new(0, -textService:GetTextSize(bindinput.Text, 15, Enum.Font.Gotham, Vector2.new(9e9, 9e9)).X - 16, 1, -10)	
+	end
+end
+ 
+local function createSlider(option, parent)
+	local main = library:Create("Frame", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 50),
+		BackgroundTransparency = 1,
+		Parent = parent.content
+	})
+ 
+	local title = library:Create("TextLabel", {
+		Position = UDim2.new(0, 0, 0, 4),
+		Size = UDim2.new(1, 0, 0, 20),
+		BackgroundTransparency = 1,
+		Text = " " .. option.text,
+		TextSize = 17,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = main
+	})
+ 
+	local slider = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 10, 0, 34),
+		Size = UDim2.new(1, -20, 0, 5),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(30, 30, 30),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local fill = library:Create("ImageLabel", {
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(60, 60, 60),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = slider
+	})
+ 
+	local circle = library:Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new((option.value - option.min) / (option.max - option.min), 0, 0.5, 0),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(60, 60, 60),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 1,
+		Parent = slider
+	})
+ 
+	local valueRound = library:Create("ImageLabel", {
+		Position = UDim2.new(1, -6, 0, 4),
+		Size = UDim2.new(0, -60, 0, 18),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(40, 40, 40),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local inputvalue = library:Create("TextBox", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = option.value,
+		TextColor3 = Color3.fromRGB(235, 235, 235),
+		TextSize = 15,
+		TextWrapped = true,
+		Font = Enum.Font.Gotham,
+		Parent = valueRound
+	})
+ 
+	if option.min >= 0 then
+		fill.Size = UDim2.new((option.value - option.min) / (option.max - option.min), 0, 1, 0)
+	else
+		fill.Position = UDim2.new((0 - option.min) / (option.max - option.min), 0, 0, 0)
+		fill.Size = UDim2.new(option.value / (option.max - option.min), 0, 1, 0)
+	end
+ 
+	local sliding
+	local inContact
+	main.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			sliding = true
+			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(3.5, 0, 3.5, 0), ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+			sliding = true
+			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not sliding then
+				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			end
+		end
+	end)
+ 
+	inputService.InputChanged:connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement and sliding then
+			option:SetValue(option.min + ((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X) * (option.max - option.min))
+		end
+	end)
+ 
+	main.InputEnded:connect(function(input)
+		if input.UserInputType == ui then
+			sliding = false
+			if inContact then
+				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			else
+				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			sliding = false
+			if inContact then
+				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(2.8, 0, 2.8, 0), ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			else
+				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = false
+			inputvalue:ReleaseFocus()
+			if not sliding then
+				tweenService:Create(fill, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+				tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end
+		end
+	end)
+ 
+	inputvalue.FocusLost:connect(function()
+		tweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+		option:SetValue(tonumber(inputvalue.Text) or option.value)
+	end)
+ 
+	function option:SetValue(value)
+		value = round(value, option.float)
+		value = math.clamp(value, self.min, self.max)
+		circle:TweenPosition(UDim2.new((value - self.min) / (self.max - self.min), 0, 0.5, 0), "Out", "Quad", 0.1, true)
+		if self.min >= 0 then
+			fill:TweenSize(UDim2.new((value - self.min) / (self.max - self.min), 0, 1, 0), "Out", "Quad", 0.1, true)
+		else
+			fill:TweenPosition(UDim2.new((0 - self.min) / (self.max - self.min), 0, 0, 0), "Out", "Quad", 0.1, true)
+			fill:TweenSize(UDim2.new(value / (self.max - self.min), 0, 1, 0), "Out", "Quad", 0.1, true)
+		end
+		library.flags[self.flag] = value
+		self.value = value
+		inputvalue.Text = value
+		self.callback(value)
+	end
+end
+ 
+local function createList(option, parent, holder)
+	local valueCount = 0
+ 
+	local main = library:Create("Frame", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 52),
+		BackgroundTransparency = 1,
+		Parent = parent.content
+	})
+ 
+	local round = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 6, 0, 4),
+		Size = UDim2.new(1, -12, 1, -10),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(40, 40, 40),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local title = library:Create("TextLabel", {
+		Position = UDim2.new(0, 12, 0, 8),
+		Size = UDim2.new(1, -24, 0, 14),
+		BackgroundTransparency = 1,
+		Text = option.text,
+		TextSize = 14,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(140, 140, 140),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = main
+	})
+ 
+	local listvalue = library:Create("TextLabel", {
+		Position = UDim2.new(0, 12, 0, 20),
+		Size = UDim2.new(1, -24, 0, 24),
+		BackgroundTransparency = 1,
+		Text = option.value,
+		TextSize = 18,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = main
+	})
+ 
+	library:Create("ImageLabel", {
+		Position = UDim2.new(1, -16, 0, 16),
+		Size = UDim2.new(-1, 32, 1, -32),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		Rotation = 90,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://4918373417",
+		ImageColor3 = Color3.fromRGB(140, 140, 140),
+		ScaleType = Enum.ScaleType.Fit,
+		Parent = round
+	})
+ 
+	option.mainHolder = library:Create("ImageButton", {
+		ZIndex = 3,
+		Size = UDim2.new(0, 240, 0, 52),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ImageColor3 = Color3.fromRGB(30, 30, 30),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Visible = false,
+		Parent = library.base
+	})
+ 
+	local content = library:Create("ScrollingFrame", {
+		ZIndex = 3,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarImageColor3 = Color3.fromRGB(),
+		ScrollBarThickness = 0,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		Parent = option.mainHolder
+	})
+ 
+	library:Create("UIPadding", {
+		PaddingTop = UDim.new(0, 6),
+		Parent = content
+	})
+ 
+	local layout = library:Create("UIListLayout", {
+		Parent = content
+	})
+ 
+	layout.Changed:connect(function()
+		option.mainHolder.Size = UDim2.new(0, 240, 0, (valueCount > 4 and (4 * 40) or layout.AbsoluteContentSize.Y) + 12)
+		content.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 12)
+	end)
+ 
+	local inContact
+	round.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			if library.activePopup then
+				library.activePopup:Close()
+			end
+			local position = main.AbsolutePosition
+			option.mainHolder.Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)
+			option.open = true
+			option.mainHolder.Visible = true
+			library.activePopup = option
+			content.ScrollBarThickness = 6
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			for _,label in next, content:GetChildren() do
+				if label:IsA"TextLabel" then
+					tweenService:Create(label, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+				end
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			if library.activePopup then
+				library.activePopup:Close()
+			end
+			local position = main.AbsolutePosition
+			option.mainHolder.Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)
+			option.open = true
+			option.mainHolder.Visible = true
+			library.activePopup = option
+			content.ScrollBarThickness = 6
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			for _,label in next, content:GetChildren() do
+				if label:IsA"TextLabel" then
+					tweenService:Create(label, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, TextTransparency = 0}):Play()
+				end
+			end
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not option.open then
+				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end
+		end
+	end)
+ 
+	round.InputEnded:connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = false
+			if not option.open then
+				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+			end
+		end
+	end)
+ 
+	function option:AddValue(value)
+		valueCount = valueCount + 1
+		local label = library:Create("TextLabel", {
+			ZIndex = 3,
+			Size = UDim2.new(1, 0, 0, 40),
+			BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+			BorderSizePixel = 0,
+			Text = "    " .. value,
+			TextSize = 14,
+			TextTransparency = self.open and 0 or 1,
+			Font = Enum.Font.Gotham,
+			TextColor3 = Color3.fromRGB(255, 255, 255),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Parent = content
+		})
+ 
+		local inContact
+		local clicking
+		label.InputBegan:connect(function(input)
+			if input.UserInputType == ui then
+				clicking = true
+				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+				self:SetValue(value)
+			elseif input.UserInputType == Enum.UserInputType.Touch then
+				clicking = true
+				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+				self:SetValue(value)
+			end
+			if input.UserInputType == Enum.UserInputType.MouseMovement then
+				inContact = true
+				if not clicking then
+					tweenService:Create(label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(20, 20, 20)}):Play()
+				end
+			end
+		end)
+ 
+		label.InputEnded:connect(function(input)
+			if input.UserInputType == ui then
+				clicking = false
+				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = inContact and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(30, 30, 30)}):Play()
+			elseif input.UserInputType == Enum.UserInputType.Touch then
+				clicking = false
+				tweenService:Create(label, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = inContact and Color3.fromRGB(20, 20, 20) or Color3.fromRGB(30, 30, 30)}):Play()
+			end
+			if input.UserInputType == Enum.UserInputType.MouseMovement then
+				inContact = false
+				if not clicking then
+					tweenService:Create(label, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
+				end
+			end
+		end)
+	end
+ 
+	if not table.find(option.values, option.value) then
+		option:AddValue(option.value)
+	end
+ 
+	for _, value in next, option.values do
+		option:AddValue(tostring(value))
+	end
+ 
+	function option:RemoveValue(value)
+		for _,label in next, content:GetChildren() do
+			if label:IsA"TextLabel" and label.Text == "	" .. value then
+				label:Destroy()
+				valueCount = valueCount - 1
+				break
+			end
+		end
+		if self.value == value then
+			self:SetValue("")
+		end
+	end
+ 
+function option:SetValue(value)
+	library.flags[self.flag] = tostring(value)
+	self.value = tostring(value)
+	listvalue.Text = self.value
+	self.callback(value)
+end
+ 
+-- 👇 ADD THIS RIGHT HERE
+function option:Refresh(newValues)
+	for _, v in next, content:GetChildren() do
+		if v:IsA("TextLabel") then
+			v:Destroy()
+		end
+	end
+ 
+	valueCount = 0
+	self.values = newValues or self.values
+ 
+	for _, value in next, self.values do
+		self:AddValue(tostring(value))
+	end
+ 
+	if not table.find(self.values, self.value) then
+		self:SetValue(self.values[1] or "")
+	end
+end
+ 
+	function option:Close()
+		library.activePopup = nil
+		self.open = false
+		content.ScrollBarThickness = 0
+		local position = main.AbsolutePosition
+		tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = inContact and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)}):Play()
+		tweenService:Create(self.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 1, Position = UDim2.new(0, position.X - 5, 0, position.Y -10)}):Play()
+		for _,label in next, content:GetChildren() do
+			if label:IsA"TextLabel" then
+				tweenService:Create(label, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
+			end
+		end
+		wait(0.3)
+		--delay(0.3, function()
+			if not self.open then
+				self.mainHolder.Visible = false
+			end
+		--end)
+	end
+ 
+	return option
+end
+ 
+local function createBox(option, parent)
+	local main = library:Create("Frame", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 52),
+		BackgroundTransparency = 1,
+		Parent = parent.content
+	})
+ 
+	local outline = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 6, 0, 4),
+		Size = UDim2.new(1, -12, 1, -10),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(60, 60, 60),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = main
+	})
+ 
+	local round = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 8, 0, 6),
+		Size = UDim2.new(1, -16, 1, -14),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.01,
+		Parent = main
+	})
+ 
+	local title = library:Create("TextLabel", {
+		Position = UDim2.new(0, 12, 0, 8),
+		Size = UDim2.new(1, -24, 0, 14),
+		BackgroundTransparency = 1,
+		Text = option.text,
+		TextSize = 14,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(100, 100, 100),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = main
+	})
+ 
+	local inputvalue = library:Create("TextBox", {
+		Position = UDim2.new(0, 12, 0, 20),
+		Size = UDim2.new(1, -24, 0, 24),
+		BackgroundTransparency = 1,
+		Text = option.value,
+		TextSize = 18,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextWrapped = true,
+		Parent = main
+	})
+ 
+	local inContact
+	local focused
+	main.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			if not focused then inputvalue:CaptureFocus() end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			if not focused then inputvalue:CaptureFocus() end
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not focused then
+				tweenService:Create(outline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			end
+		end
+	end)
+ 
+	main.InputEnded:connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = false
+			if not focused then
+				tweenService:Create(outline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end
+		end
+	end)
+ 
+	inputvalue.Focused:connect(function()
+		focused = true
+		tweenService:Create(outline, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 65, 65)}):Play()
+	end)
+ 
+	inputvalue.FocusLost:connect(function(enter)
+		focused = false
+		tweenService:Create(outline, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+		option:SetValue(inputvalue.Text, enter)
+	end)
+ 
+	function option:SetValue(value, enter)
+		library.flags[self.flag] = tostring(value)
+		self.value = tostring(value)
+		inputvalue.Text = self.value
+		self.callback(value, enter)
+	end
+end
+ 
+local function createColorPickerWindow(option)
+	option.mainHolder = library:Create("ImageButton", {
+		ZIndex = 3,
+		Size = UDim2.new(0, 240, 0, 180),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ImageColor3 = Color3.fromRGB(30, 30, 30),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = library.base
+	})
+ 
+	local hue, sat, val = Color3.toHSV(option.color)
+	hue, sat, val = hue == 0 and 1 or hue, sat + 0.005, val - 0.005
+	local editinghue
+	local editingsatval
+	local currentColor = option.color
+	local previousColors = {[1] = option.color}
+	local originalColor = option.color
+	local rainbowEnabled
+	local rainbowLoop
+ 
+	function option:updateVisuals(Color)
+		currentColor = Color
+		self.visualize2.ImageColor3 = Color
+		hue, sat, val = Color3.toHSV(Color)
+		hue = hue == 0 and 1 or hue
+		self.satval.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+		self.hueSlider.Position = UDim2.new(1 - hue, 0, 0, 0)
+		self.satvalSlider.Position = UDim2.new(sat, 0, 1 - val, 0)
+	end
+ 
+	option.hue = library:Create("ImageLabel", {
+		ZIndex = 3,
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 8, 1, -8),
+		Size = UDim2.new(1, -100, 0, 22),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.mainHolder
+	})
+ 
+	local Gradient = library:Create("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+			ColorSequenceKeypoint.new(0.157, Color3.fromRGB(255, 0, 255)),
+			ColorSequenceKeypoint.new(0.323, Color3.fromRGB(0, 0, 255)),
+			ColorSequenceKeypoint.new(0.488, Color3.fromRGB(0, 255, 255)),
+			ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0, 255, 0)),
+			ColorSequenceKeypoint.new(0.817, Color3.fromRGB(255, 255, 0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0)),
+		}),
+		Parent = option.hue
+	})
+ 
+	option.hueSlider = library:Create("Frame", {
+		ZIndex = 3,
+		Position = UDim2.new(1 - hue, 0, 0, 0),
+		Size = UDim2.new(0, 2, 1, 0),
+		BackgroundTransparency = 1,
+		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+		BorderColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = option.hue
+	})
+ 
+	option.hue.InputBegan:connect(function(Input)
+		if Input.UserInputType == ui then
+			editinghue = true
+			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
+			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
+			X = X < 0 and 0 or X > 0.995 and 0.995 or X
+			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			editinghue = true
+			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
+			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
+			X = X < 0 and 0 or X > 0.995 and 0.995 or X
+			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
+		end
+	end)
+ 
+	inputService.InputChanged:connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and editinghue then
+			X = (option.hue.AbsolutePosition.X + option.hue.AbsoluteSize.X) - option.hue.AbsolutePosition.X
+			X = (Input.Position.X - option.hue.AbsolutePosition.X) / X
+			X = X <= 0 and 0 or X >= 0.995 and 0.995 or X
+			option:updateVisuals(Color3.fromHSV(1 - X, sat, val))
+		end
+	end)
+ 
+	option.hue.InputEnded:connect(function(Input)
+		if Input.UserInputType == ui then
+			editinghue = false
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			editinghue = false
+		end
+	end)
+ 
+	option.satval = library:Create("ImageLabel", {
+		ZIndex = 3,
+		Position = UDim2.new(0, 8, 0, 8),
+		Size = UDim2.new(1, -100, 1, -42),
+		BackgroundTransparency = 1,
+		BackgroundColor3 = Color3.fromHSV(hue, 1, 1),
+		BorderSizePixel = 0,
+		Image = "rbxassetid://4155801252",
+		ImageTransparency = 1,
+		ClipsDescendants = true,
+		Parent = option.mainHolder
+	})
+ 
+	option.satvalSlider = library:Create("Frame", {
+		ZIndex = 3,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(sat, 0, 1 - val, 0),
+		Size = UDim2.new(0, 4, 0, 4),
+		Rotation = 45,
+		BackgroundTransparency = 1,
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = option.satval
+	})
+ 
+	option.satval.InputBegan:connect(function(Input)
+		if Input.UserInputType == ui then
+			editingsatval = true
+			X = (option.satval.AbsolutePosition.X + option.satval.AbsoluteSize.X) - option.satval.AbsolutePosition.X
+			Y = (option.satval.AbsolutePosition.Y + option.satval.AbsoluteSize.Y) - option.satval.AbsolutePosition.Y
+			X = (Input.Position.X - option.satval.AbsolutePosition.X) / X
+			Y = (Input.Position.Y - option.satval.AbsolutePosition.Y) / Y
+			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
+			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
+			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			editingsatval = true
+			X = (option.satval.AbsolutePosition.X + option.satval.AbsoluteSize.X) - option.satval.AbsolutePosition.X
+			Y = (option.satval.AbsolutePosition.Y + option.satval.AbsoluteSize.Y) - option.satval.AbsolutePosition.Y
+			X = (Input.Position.X - option.satval.AbsolutePosition.X) / X
+			Y = (Input.Position.Y - option.satval.AbsolutePosition.Y) / Y
+			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
+			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
+			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
+		end
+	end)
+ 
+	inputService.InputChanged:connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and editingsatval then
+			X = (option.satval.AbsolutePosition.X + option.satval.AbsoluteSize.X) - option.satval.AbsolutePosition.X
+			Y = (option.satval.AbsolutePosition.Y + option.satval.AbsoluteSize.Y) - option.satval.AbsolutePosition.Y
+			X = (Input.Position.X - option.satval.AbsolutePosition.X) / X
+			Y = (Input.Position.Y - option.satval.AbsolutePosition.Y) / Y
+			X = X <= 0.005 and 0.005 or X >= 1 and 1 or X
+			Y = Y <= 0 and 0 or Y >= 0.995 and 0.995 or Y
+			option:updateVisuals(Color3.fromHSV(hue, X, 1 - Y))
+		end
+	end)
+ 
+	option.satval.InputEnded:connect(function(Input)
+		if Input.UserInputType == ui then
+			editingsatval = false
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			editingsatval = false
+		end
+	end)
+ 
+	option.visualize2 = library:Create("ImageLabel", {
+		ZIndex = 3,
+		Position = UDim2.new(1, -8, 0, 8),
+		Size = UDim2.new(0, -80, 0, 80),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = currentColor,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.mainHolder
+	})
+ 
+	option.resetColor = library:Create("ImageLabel", {
+		ZIndex = 3,
+		Position = UDim2.new(1, -8, 0, 92),
+		Size = UDim2.new(0, -80, 0, 18),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.mainHolder
+	})
+ 
+	option.resetText = library:Create("TextLabel", {
+		ZIndex = 3,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = "Reset",
+		TextTransparency = 1,
+		Font = Enum.Font.Code,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = option.resetColor
+	})
+ 
+	option.resetColor.InputBegan:connect(function(Input)
+		if Input.UserInputType == ui and not rainbowEnabled then
+			previousColors = {originalColor}
+			option:SetColor(originalColor)
+		elseif input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
+			previousColors = {originalColor}
+			option:SetColor(originalColor)
+		end
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.resetColor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+		end
+	end)
+ 
+	option.resetColor.InputEnded:connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.resetColor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(20, 20, 20)}):Play()
+		end
+	end)
+ 
+	option.undoColor = library:Create("ImageLabel", {
+		ZIndex = 3,
+		Position = UDim2.new(1, -8, 0, 112),
+		Size = UDim2.new(0, -80, 0, 18),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.mainHolder
+	})
+ 
+	option.undoText = library:Create("TextLabel", {
+		ZIndex = 3,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = "Undo",
+		TextTransparency = 1,
+		Font = Enum.Font.Code,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = option.undoColor
+	})
+ 
+	option.undoColor.InputBegan:connect(function(Input)
+		if Input.UserInputType == ui and not rainbowEnabled then
+			local Num = #previousColors == 1 and 0 or 1
+			option:SetColor(previousColors[#previousColors - Num])
+			if #previousColors ~= 1 then
+				table.remove(previousColors, #previousColors)
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
+			local Num = #previousColors == 1 and 0 or 1
+			option:SetColor(previousColors[#previousColors - Num])
+			if #previousColors ~= 1 then
+				table.remove(previousColors, #previousColors)
+			end
+		end
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.undoColor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+		end
+	end)
+ 
+	option.undoColor.InputEnded:connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.undoColor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(20, 20, 20)}):Play()
+		end
+	end)
+ 
+	option.setColor = library:Create("ImageLabel", {
+		ZIndex = 3,
+		Position = UDim2.new(1, -8, 0, 132),
+		Size = UDim2.new(0, -80, 0, 18),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.mainHolder
+	})
+ 
+	option.setText = library:Create("TextLabel", {
+		ZIndex = 3,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = "Set",
+		TextTransparency = 1,
+		Font = Enum.Font.Code,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = option.setColor
+	})
+ 
+	option.setColor.InputBegan:connect(function(Input)
+		if Input.UserInputType == ui and not rainbowEnabled then
+			table.insert(previousColors, currentColor)
+			option:SetColor(currentColor)
+		elseif input.UserInputType == Enum.UserInputType.Touch and not rainbowEnabled then
+			table.insert(previousColors, currentColor)
+			option:SetColor(currentColor)
+		end
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.setColor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+		end
+	end)
+ 
+	option.setColor.InputEnded:connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.setColor, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(20, 20, 20)}):Play()
+		end
+	end)
+ 
+	option.rainbow = library:Create("ImageLabel", {
+		ZIndex = 3,
+		Position = UDim2.new(1, -8, 0, 152),
+		Size = UDim2.new(0, -80, 0, 18),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageTransparency = 1,
+		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.mainHolder
+	})
+ 
+	option.rainbowText = library:Create("TextLabel", {
+		ZIndex = 3,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = "Rainbow",
+		TextTransparency = 1,
+		Font = Enum.Font.Code,
+		TextSize = 15,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = option.rainbow
+	})
+ 
+	option.rainbow.InputBegan:connect(function(Input)
+		if Input.UserInputType == ui then
+			rainbowEnabled = not rainbowEnabled
+			if rainbowEnabled then
+				rainbowLoop = runService.Heartbeat:connect(function()
+					option:SetColor(chromaColor)
+					option.rainbowText.TextColor3 = chromaColor
+				end)
+			else
+				rainbowLoop:Disconnect()
+				option:SetColor(previousColors[#previousColors])
+				option.rainbowText.TextColor3 = Color3.fromRGB(255, 255, 255)
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			rainbowEnabled = not rainbowEnabled
+			if rainbowEnabled then
+				rainbowLoop = runService.Heartbeat:connect(function()
+					option:SetColor(chromaColor)
+					option.rainbowText.TextColor3 = chromaColor
+				end)
+			else
+				rainbowLoop:Disconnect()
+				option:SetColor(previousColors[#previousColors])
+				option.rainbowText.TextColor3 = Color3.fromRGB(255, 255, 255)
+			end
+		end
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.rainbow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(10, 10, 10)}):Play()
+		end
+	end)
+ 
+	option.rainbow.InputEnded:connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseMovement and not dragging then
+			tweenService:Create(option.rainbow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(20, 20, 20)}):Play()
+		end
+	end)
+ 
+	return option
+end
+ 
+local function createColor(option, parent, holder)
+	option.main = library:Create("TextLabel", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 31),
+		BackgroundTransparency = 1,
+		Text = " " .. option.text,
+		TextSize = 17,
+		Font = Enum.Font.Gotham,
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = parent.content
+	})
+ 
+	local colorBoxOutline = library:Create("ImageLabel", {
+		Position = UDim2.new(1, -6, 0, 4),
+		Size = UDim2.new(-1, 10, 1, -10),
+		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(100, 100, 100),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = option.main
+	})
+ 
+	option.visualize = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 2, 0, 2),
+		Size = UDim2.new(1, -4, 1, -4),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = option.color,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.02,
+		Parent = colorBoxOutline
+	})
+ 
+	local inContact
+	option.main.InputBegan:connect(function(input)
+		if input.UserInputType == ui then
+			if not option.mainHolder then createColorPickerWindow(option) end
+			if library.activePopup then
+				library.activePopup:Close()
+			end
+			local position = option.main.AbsolutePosition
+			option.mainHolder.Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)
+			option.open = true
+			option.mainHolder.Visible = true
+			library.activePopup = option
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			tweenService:Create(option.satval, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+			for _,object in next, option.mainHolder:GetDescendants() do
+				if object:IsA"TextLabel" then
+					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+				elseif object:IsA"ImageLabel" then
+					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+				elseif object:IsA"Frame" then
+					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+				end
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			if not option.mainHolder then createColorPickerWindow(option) end
+			if library.activePopup then
+				library.activePopup:Close()
+			end
+			local position = option.main.AbsolutePosition
+			option.mainHolder.Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)
+			option.open = true
+			option.mainHolder.Visible = true
+			library.activePopup = option
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0, position.X - 5, 0, position.Y - 4)}):Play()
+			tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1), {Position = UDim2.new(0, position.X - 5, 0, position.Y + 1)}):Play()
+			tweenService:Create(option.satval, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+			for _,object in next, option.mainHolder:GetDescendants() do
+				if object:IsA"TextLabel" then
+					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+				elseif object:IsA"ImageLabel" then
+					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+				elseif object:IsA"Frame" then
+					tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
+				end
+			end
+		end
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not option.open then
+				tweenService:Create(colorBoxOutline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(140, 140, 140)}):Play()
+			end
+		end
+	end)
+ 
+	option.main.InputEnded:connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			inContact = true
+			if not option.open then
+				tweenService:Create(colorBoxOutline, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+			end
+		end
+	end)
+ 
+	function option:SetColor(newColor)
+		if self.mainHolder then
+			self:updateVisuals(newColor)
+		end
+		self.visualize.ImageColor3 = newColor
+		library.flags[self.flag] = newColor
+		self.color = newColor
+		self.callback(newColor)
+	end
+ 
+	function option:Close()
+		library.activePopup = nil
+		self.open = false
+		local position = self.main.AbsolutePosition
+		tweenService:Create(self.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 1, Position = UDim2.new(0, position.X - 5, 0, position.Y - 10)}):Play()
+		tweenService:Create(self.satval, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+		for _,object in next, self.mainHolder:GetDescendants() do
+			if object:IsA"TextLabel" then
+				tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
+			elseif object:IsA"ImageLabel" then
+				tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
+			elseif object:IsA"Frame" then
+				tweenService:Create(object, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+			end
+		end
+		delay(0.3, function()
+			if not self.open then
+				self.mainHolder.Visible = false
+			end 
+		end)
+	end
+end
+ 
+local function loadOptions(option, holder)
+	for _,newOption in next, option.options do
+		if newOption.type == "label" then
+			createLabel(newOption, option)
+		elseif newOption.type == "toggle" then
+			createToggle(newOption, option)
+		elseif newOption.type == "button" then
+			createButton(newOption, option)
+		elseif newOption.type == "list" then
+			createList(newOption, option, holder)
+		elseif newOption.type == "box" then
+			createBox(newOption, option)
+		elseif newOption.type == "bind" then
+			createBind(newOption, option)
+		elseif newOption.type == "slider" then
+			createSlider(newOption, option)
+		elseif newOption.type == "color" then
+			createColor(newOption, option, holder)
+		elseif newOption.type == "folder" then
+			newOption:init()
+		end
+	end
+end
+ 
+local function getFnctions(parent)
+	function parent:AddLabel(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.type = "label"
+		option.position = #self.options
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddToggle(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.state = typeof(option.state) == "boolean" and option.state or false
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.type = "toggle"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.state
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddButton(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.type = "button"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddBind(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.key = (option.key and option.key.Name) or option.key or "F"
+		option.hold = typeof(option.hold) == "boolean" and option.hold or false
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.type = "bind"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.key
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddSlider(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.min = typeof(option.min) == "number" and option.min or 0
+		option.max = typeof(option.max) == "number" and option.max or 0
+		option.dual = typeof(option.dual) == "boolean" and option.dual or false
+		option.value = math.clamp(typeof(option.value) == "number" and option.value or option.min, option.min, option.max)
+		option.value2 = typeof(option.value2) == "number" and option.value2 or option.max
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.float = typeof(option.value) == "number" and option.float or 1
+		option.type = "slider"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.value
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddList(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.values = typeof(option.values) == "table" and option.values or {}
+		option.value = tostring(option.value or option.values[1] or "")
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.open = false
+		option.type = "list"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.value
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddBox(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.value = tostring(option.value or "")
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.type = "box"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.value
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddColor(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.color = typeof(option.color) == "table" and Color3.new(tonumber(option.color[1]), tonumber(option.color[2]), tonumber(option.color[3])) or option.color or Color3.new(255, 255, 255)
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.open = false
+		option.type = "color"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.color
+		table.insert(self.options, option)
+ 
+		return option
+	end
+ 
+	function parent:AddFolder(title)
+		local option = {}
+		option.title = tostring(title)
+		option.options = {}
+		option.open = false
+		option.type = "folder"
+		option.position = #self.options
+		table.insert(self.options, option)
+ 
+		getFnctions(option)
+ 
+		function option:init()
+			createOptionHolder(self.title, parent.content, self, true)
+			loadOptions(self, parent)
+		end
+ 
+		return option
+	end
+end
+ 
+function library:CreateWindow(title)
+	local window = {title = tostring(title), options = {}, open = true, canInit = true, init = false, position = #self.windows}
+	getFnctions(window)
+ 
+	table.insert(library.windows, window)
+ 
+	return window
+end
+ 
+local UIToggle
+function library:Init()
+	self.base = self.base or self:Create("ScreenGui")
+	if syn and syn.protect_gui then
+		syn.protect_gui(self.base)
+	elseif get_hidden_gui then
+		get_hidden_gui(self.base)
+	elseif gethui then
+		gethui(self.base)
+	else
+		game:GetService"Players".LocalPlayer:Kick("Error: protect_gui function not found")
+		return
+	end
+	self.base.Parent = game:GetService"CoreGui"
+	self.base.ResetOnSpawn = true
+	self.base.Name = "ToraScript"
+ 
+ 
+	for _, window in next, self.windows do
+		if window.canInit and not window.init then
+			window.init = true
+			createOptionHolder(window.title, self.base, window)
+			loadOptions(window)
+		end
+	end
+	return self.base
+end
+ 
+function library:Close()
+	if typeof(self.base) ~= "Instance" then end
+	self.open = not self.open
+	if self.activePopup then
+		self.activePopup:Close()
+	end
+	for _, window in next, self.windows do
+		if window.main then
+			window.main.Visible = self.open
+		end
+	end
+end
+ 
+inputService.InputBegan:connect(function(input)
+	if input.UserInputType == ui then
+		if library.activePopup then
+			if input.Position.X < library.activePopup.mainHolder.AbsolutePosition.X or input.Position.Y < library.activePopup.mainHolder.AbsolutePosition.Y then
+				library.activePopup:Close()
+			end
+		end
+		if library.activePopup then
+			if input.Position.X > library.activePopup.mainHolder.AbsolutePosition.X + library.activePopup.mainHolder.AbsoluteSize.X or input.Position.Y > library.activePopup.mainHolder.AbsolutePosition.Y + library.activePopup.mainHolder.AbsoluteSize.Y then
+				library.activePopup:Close()
+			end
+		end
+	elseif input.UserInputType == Enum.UserInputType.Touch then
+		if library.activePopup then
+			if input.Position.X < library.activePopup.mainHolder.AbsolutePosition.X or input.Position.Y < library.activePopup.mainHolder.AbsolutePosition.Y then
+				library.activePopup:Close()
+			end
+		end
+		if library.activePopup then
+			if input.Position.X > library.activePopup.mainHolder.AbsolutePosition.X + library.activePopup.mainHolder.AbsoluteSize.X or input.Position.Y > library.activePopup.mainHolder.AbsolutePosition.Y + library.activePopup.mainHolder.AbsoluteSize.Y then
+				library.activePopup:Close()
+			end
+		end
+	end
 end)
-if not _0x0050 then
-_0x0005:_0x0044(string.char(85, 73, 80, 97, 100, 100, 105, 110, 103), {
-_0x0060 = _0x004f._0x0071
-})
-_0x0061._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x0018 = _0x004f._0x0052
-_0x0014 = true
-_0x0016 = _0x0025._0x0027
-_0x0017 = _0x0018._0x0027
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x0018 = _0x004f._0x0052
-_0x0014 = true
-_0x0016 = _0x0025._0x0027
-_0x0017 = _0x0018._0x0027
-end
+ 
+inputService.InputChanged:connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
 end)
-_0x0061._0x007a:_0x0075(function(_0x0025)
-if _0x0014 and _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0015 = _0x0025
-elseif _0x0014 and _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x0015 = _0x0025
-end
-end)
-_0x0061._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x0014 = false
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x0014 = false
-end
-end)
-end
-_0x0069._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x004f._0x0008 = not _0x004f._0x0008
-_0x000d:_0x0044(_0x006c, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x006f = _0x004f._0x0008 and 90 or 180, _0x0058 = _0x004f._0x0008 and _0x0041._0x0059(50, 50, 50) or _0x0041._0x0059(30, 30, 30)}):_0x0082()
-if _0x0050 then
-_0x000d:_0x0044(_0x0061, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x004f._0x0008 and _0x0041._0x0059(16, 16, 16) or _0x0041._0x0059(10, 10, 10)}):_0x0082()
-else
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x004f._0x0008 and _0x0041._0x0059(10, 10, 10) or _0x0041._0x0059(6, 6, 6)}):_0x0082()
-end
-_0x004f._0x0052:_0x0083(#_0x004f._0x0077 > 0 and _0x004f._0x0008 and _0x002c._0x002d(0, 230, 0, _0x0072._0x0076._0x0029 + _0x0051) or _0x002c._0x002d(0, 230, 0, _0x0051), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.2, true)
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x004f._0x0008 = not _0x004f._0x0008
-_0x000d:_0x0044(_0x006c, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x006f = _0x004f._0x0008 and 90 or 180, _0x0058 = _0x004f._0x0008 and _0x0041._0x0059(50, 50, 50) or _0x0041._0x0059(30, 30, 30)}):_0x0082()
-if _0x0050 then
-_0x000d:_0x0044(_0x0061, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x004f._0x0008 and _0x0041._0x0059(16, 16, 16) or _0x0041._0x0059(10, 10, 10)}):_0x0082()
-else
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x004f._0x0008 and _0x0041._0x0059(10, 10, 10) or _0x0041._0x0059(6, 6, 6)}):_0x0082()
-end
-_0x004f._0x0052:_0x0083(#_0x004f._0x0077 > 0 and _0x004f._0x0008 and _0x002c._0x002d(0, 230, 0, _0x0072._0x0076._0x0029 + _0x0051) or _0x002c._0x002d(0, 230, 0, _0x0051), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.2, true)
-end
-end)
-function _0x004f:_0x0084(_0x0085)
-_0x0061._0x0064 = tostring(_0x0085)
-end
-return _0x004f
-end
-local function _0x0086(_0x0087, _0x004e)
-local _0x0052 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 26),
-_0x0056 = 1,
-_0x0064 = string.char(32) .. _0x0087._0x0088,
-_0x0065 = 17,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x004e._0x0071
-})
-setmetatable(_0x0087, {_0x008c = function(_0x0035, _0x008d, _0x0023)
-if _0x008d == string.char(84, 101, 120, 116) then
-_0x0052._0x0064 = string.char(32) .. tostring(_0x0023)
-end
-end})
-end
-function _0x008e(_0x0087, _0x004e)
-local _0x0052 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 31),
-_0x0056 = 1,
-_0x0064 = string.char(32) .. _0x0087._0x0088,
-_0x0065 = 17,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x004e._0x0071
-})
-local _0x008f = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(1, -6, 0, 4),
-_0x0055 = _0x002c._0x002d(-1, 10, 1, -10),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0087._0x0090 and _0x0041._0x0059(255, 65, 65) or _0x0041._0x0059(100, 100, 100),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x0091 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 2, 0, 2),
-_0x0055 = _0x002c._0x002d(1, -4, 1, -4),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0087._0x0090 and _0x0041._0x0059(255, 65, 65) or _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x008f
-})
-local _0x0092 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x0027 = _0x002c._0x002d(0, 4, 0, 4),
-_0x0055 = _0x0087._0x0090 and _0x002c._0x002d(1, -8, 1, -8) or _0x002c._0x002d(0, 0, 1, -8),
-_0x0056 = 1,
-_0x005f = true,
-_0x0060 = _0x008f
-})
-local _0x0093 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 52, 57, 49, 57, 49, 52, 56, 48, 51, 56),
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x0060 = _0x0092
-})
-local _0x0094
-_0x0052._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x0087:_0x0095(not _0x0087._0x0090)
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x0087:_0x0095(not _0x0087._0x0090)
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x0087._0x0090 then
-_0x000d:_0x0044(_0x008f, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(140, 140, 140)}):_0x0082()
-end
-end
-end)
-_0x0052._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x0087._0x0090 then
-_0x000d:_0x0044(_0x008f, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-end
-end
-end)
-function _0x0087:_0x0095(_0x0090)
-_0x0005._0x0006[_0x0096._0x0097] = _0x0090
-_0x0096._0x0090 = _0x0090
-_0x0092:_0x0083(_0x0087._0x0090 and _0x002c._0x002d(1, -8, 1, -8) or _0x002c._0x002d(0, 0, 1, -8), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.2, true)
-_0x000d:_0x0044(_0x0091, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0090 and _0x0041._0x0059(255, 65, 65) or _0x0041._0x0059(20, 20, 20)}):_0x0082()
-if _0x0090 then
-_0x000d:_0x0044(_0x008f, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-else
-if _0x0094 then
-_0x000d:_0x0044(_0x008f, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(140, 140, 140)}):_0x0082()
-else
-_0x000d:_0x0044(_0x008f, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-end
-end
-_0x0096._0x0098(_0x0090)
-end
-if _0x0087._0x0090 then
-_0x0099(1, function() _0x0087._0x0098(true) end)
-end
-setmetatable(_0x0087, {_0x008c = function(_0x0035, _0x008d, _0x0023)
-if _0x008d == string.char(84, 101, 120, 116) then
-_0x0052._0x0064 = string.char(32) .. tostring(_0x0023)
-end
-end})
-end
-function _0x009a(_0x0087, _0x004e)
-local _0x0052 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x009b = 2,
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 34),
-_0x0056 = 1,
-_0x0064 = string.char(32) .. _0x0087._0x0088,
-_0x0065 = 17,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x004e._0x0071
-})
-local _0x001a = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x006d = _0x006e._0x002d(0.5, 0.5),
-_0x0027 = _0x002c._0x002d(0.5, 0, 0.5, 0),
-_0x0055 = _0x002c._0x002d(1, -12, 1, -10),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(40, 40, 40),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x0094
-local _0x009c
-_0x0052._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x0005._0x0006[_0x0087._0x0097] = true
-_0x009c = true
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-_0x0087._0x0098()
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x0005._0x0006[_0x0087._0x0097] = true
-_0x009c = true
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-_0x0087._0x0098()
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-end)
-_0x0052._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x009c = false
-if _0x0094 then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-else
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(40, 40, 40)}):_0x0082()
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x009c = false
-if _0x0094 then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-else
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(40, 40, 40)}):_0x0082()
-end
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = false
-if not _0x009c then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(40, 40, 40)}):_0x0082()
-end
-end
-end)
-end
-local function _0x009d(_0x0087, _0x004e)
-local _0x009e
-local _0x009f
-local _0x00a0
-local _0x0088 = string.match(_0x0087._0x00a1, string.char(77, 111, 117, 115, 101)) and string.sub(_0x0087._0x00a1, 1, 5) .. string.sub(_0x0087._0x00a1, 12, 13) or _0x0087._0x00a1
-local _0x0052 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 33),
-_0x0056 = 1,
-_0x0064 = string.char(32) .. _0x0087._0x0088,
-_0x0065 = 17,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x004e._0x0071
-})
-local _0x001a = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(1, -6, 0, 4),
-_0x0055 = _0x002c._0x002d(0, -_0x000e:_0x00a2(_0x0088, 16, _0x0010._0x0066._0x0089, _0x006e._0x002d(9e9, 9e9))._0x002e - 16, 1, -10),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(40, 40, 40),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x00a3 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0064 = _0x0088,
-_0x0065 = 16,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x001a
-})
-local _0x0094
-_0x0052._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x009e then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-end
-end)
-_0x0052._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x009e = true
-_0x00a3._0x0064 = string.char(46, 46, 46)
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x009e = true
-_0x00a3._0x0064 = string.char(46, 46, 46)
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = false
-if not _0x009e then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(40, 40, 40)}):_0x0082()
-end
-end
-end)
-_0x000f._0x0078:_0x0075(function(_0x0025)
-if _0x000f:_0x00a4() then return end
-if (_0x0025._0x00a5._0x00a6 == _0x0087._0x00a1 or _0x0025._0x0011._0x00a6 == _0x0087._0x00a1) and not _0x009e then
-if _0x0087._0x00a7 then
-_0x00a0 = _0x000a._0x00a8:_0x0075(function()
-if _0x009e then
-_0x0087._0x0098(true)
-_0x00a0:_0x00a9()
-_0x00a0 = nil
-else
-_0x0087._0x0098()
-end
-end)
-else
-_0x0087._0x0098()
-end
-elseif _0x009e then
-local _0x00a1
-pcall(function()
-if not _0x001f(_0x0025._0x00a5, _0x00aa) then
-_0x00a1 = _0x0025._0x00a5
-end
-end)
-pcall(function()
-if _0x001f(_0x0025._0x0011, _0x00ab) and not _0x00a1 then
-_0x00a1 = _0x0025._0x0011
-end
-end)
-_0x00a1 = _0x00a1 or _0x0087._0x00a1
-_0x0087:_0x00ac(_0x00a1)
-end
-end)
-_0x000f._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x00a5._0x00a6 == _0x0087._0x00a1 or _0x0025._0x0011._0x00a6 == _0x0087._0x00a1 or _0x0025._0x0011._0x00a6 == string.char(77, 111, 117, 115, 101, 77, 111, 118, 101, 109, 101, 110, 116) then
-if _0x00a0 then
-_0x00a0:_0x00a9()
-_0x00a0 = nil
-_0x0087._0x0098(true)
-end
-end
-end)
-function _0x0087:_0x00ac(_0x00a1)
-_0x009e = false
-if _0x00a0 then
-_0x00a0:_0x00a9()
-_0x00a0 = nil
-end
-_0x0096._0x00a1 = _0x00a1 or _0x0096._0x00a1
-_0x0096._0x00a1 = _0x0096._0x00a1._0x00a6 or _0x0096._0x00a1
-_0x0005._0x0006[_0x0096._0x0097] = _0x0096._0x00a1
-if string.match(_0x0096._0x00a1, string.char(77, 111, 117, 115, 101)) then
-_0x00a3._0x0064 = string.sub(_0x0096._0x00a1, 1, 5) .. string.sub(_0x0096._0x00a1, 12, 13)
-else
-_0x00a3._0x0064 = _0x0096._0x00a1
-end
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0094 and _0x0041._0x0059(60, 60, 60) or _0x0041._0x0059(40, 40, 40)}):_0x0082()
-_0x001a._0x0055 = _0x002c._0x002d(0, -_0x000e:_0x00a2(_0x00a3._0x0064, 15, _0x0010._0x0066._0x0089, _0x006e._0x002d(9e9, 9e9))._0x002e - 16, 1, -10)
-end
-end
-local function _0x00ad(_0x0087, _0x004e)
-local _0x0052 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 50),
-_0x0056 = 1,
-_0x0060 = _0x004e._0x0071
-})
-local _0x0061 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 0, 0, 4),
-_0x0055 = _0x002c._0x002d(1, 0, 0, 20),
-_0x0056 = 1,
-_0x0064 = string.char(32) .. _0x0087._0x0088,
-_0x0065 = 17,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x0052
-})
-local _0x00ae = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 10, 0, 34),
-_0x0055 = _0x002c._0x002d(1, -20, 0, 5),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(30, 30, 30),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x00af = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(60, 60, 60),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x00ae
-})
-local _0x00b0 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x006d = _0x006e._0x002d(0.5, 0.5),
-_0x0027 = _0x002c._0x002d((_0x0087._0x004b - _0x0087.min) / (_0x0087.max - _0x0087.min), 0, 0.5, 0),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(60, 60, 60),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 1,
-_0x0060 = _0x00ae
-})
-local _0x00b1 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(1, -6, 0, 4),
-_0x0055 = _0x002c._0x002d(0, -60, 0, 18),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(40, 40, 40),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x00b2 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 66, 111, 120), {
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0064 = _0x0087._0x004b,
-_0x0068 = _0x0041._0x0059(235, 235, 235),
-_0x0065 = 15,
-_0x00b3 = true,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0060 = _0x00b1
-})
-if _0x0087.min >= 0 then
-_0x00af._0x0055 = _0x002c._0x002d((_0x0087._0x004b - _0x0087.min) / (_0x0087.max - _0x0087.min), 0, 1, 0)
-else
-_0x00af._0x0027 = _0x002c._0x002d((0 - _0x0087.min) / (_0x0087.max - _0x0087.min), 0, 0, 0)
-_0x00af._0x0055 = _0x002c._0x002d(_0x0087._0x004b / (_0x0087.max - _0x0087.min), 0, 1, 0)
-end
-local _0x00b4
-local _0x0094
-_0x0052._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(3.5, 0, 3.5, 0), _0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-_0x00b4 = true
-_0x0087:_0x00b5(_0x0087.min + ((_0x0025._0x0027._0x002e - _0x00ae._0x00b6._0x002e) / _0x00ae._0x00b7._0x002e) * (_0x0087.max - _0x0087.min))
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(3.5, 0, 3.5, 0), _0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-_0x00b4 = true
-_0x0087:_0x00b5(_0x0087.min + ((_0x0025._0x0027._0x002e - _0x00ae._0x00b6._0x002e) / _0x00ae._0x00b7._0x002e) * (_0x0087.max - _0x0087.min))
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x00b4 then
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(2.8, 0, 2.8, 0), _0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-end
-end
-end)
-_0x000f._0x007a:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b and _0x00b4 then
-_0x0087:_0x00b5(_0x0087.min + ((_0x0025._0x0027._0x002e - _0x00ae._0x00b6._0x002e) / _0x00ae._0x00b7._0x002e) * (_0x0087.max - _0x0087.min))
-end
-end)
-_0x0052._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x00b4 = false
-if _0x0094 then
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(2.8, 0, 2.8, 0), _0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-else
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(0, 0, 0, 0), _0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x00b4 = false
-if _0x0094 then
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(2.8, 0, 2.8, 0), _0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-else
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(0, 0, 0, 0), _0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = false
-_0x00b2:_0x00b8()
-if not _0x00b4 then
-_0x000d:_0x0044(_0x00af, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(0, 0, 0, 0), _0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-end
-end)
-_0x00b2._0x00b9:_0x0075(function()
-_0x000d:_0x0044(_0x00b0, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0055 = _0x002c._0x002d(0, 0, 0, 0), _0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-_0x0087:_0x00b5(tonumber(_0x00b2._0x0064) or _0x0087._0x004b)
-end)
-function _0x0087:_0x00b5(_0x004b)
-_0x004b = _0x001a(_0x004b, _0x0087._0x00ba)
-_0x004b = math._0x00bb(_0x004b, _0x0096.min, _0x0096.max)
-_0x00b0:_0x002b(_0x002c._0x002d((_0x004b - _0x0096.min) / (_0x0096.max - _0x0096.min), 0, 0.5, 0), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.1, true)
-if _0x0096.min >= 0 then
-_0x00af:_0x0083(_0x002c._0x002d((_0x004b - _0x0096.min) / (_0x0096.max - _0x0096.min), 0, 1, 0), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.1, true)
-else
-_0x00af:_0x002b(_0x002c._0x002d((0 - _0x0096.min) / (_0x0096.max - _0x0096.min), 0, 0, 0), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.1, true)
-_0x00af:_0x0083(_0x002c._0x002d(_0x004b / (_0x0096.max - _0x0096.min), 0, 1, 0), string.char(79, 117, 116), string.char(81, 117, 97, 100), 0.1, true)
-end
-_0x0005._0x0006[_0x0096._0x0097] = _0x004b
-_0x0096._0x004b = _0x004b
-_0x00b2._0x0064 = _0x004b
-_0x0096._0x0098(_0x004b)
-end
-end
-local function _0x00bc(_0x0087, _0x004e, _0x00bd)
-local _0x00be = 0
-local _0x0052 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 52),
-_0x0056 = 1,
-_0x0060 = _0x004e._0x0071
-})
-local _0x001a = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 6, 0, 4),
-_0x0055 = _0x002c._0x002d(1, -12, 1, -10),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(40, 40, 40),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x0061 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 12, 0, 8),
-_0x0055 = _0x002c._0x002d(1, -24, 0, 14),
-_0x0056 = 1,
-_0x0064 = _0x0087._0x0088,
-_0x0065 = 14,
-_0x0066 = _0x0010._0x0066._0x0067,
-_0x0068 = _0x0041._0x0059(140, 140, 140),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x0052
-})
-local _0x00bf = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 12, 0, 20),
-_0x0055 = _0x002c._0x002d(1, -24, 0, 24),
-_0x0056 = 1,
-_0x0064 = _0x0087._0x004b,
-_0x0065 = 18,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x0052
-})
-_0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(1, -16, 0, 16),
-_0x0055 = _0x002c._0x002d(-1, 32, 1, -32),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x006f = 90,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 52, 57, 49, 56, 51, 55, 51, 52, 49, 55),
-_0x0058 = _0x0041._0x0059(140, 140, 140),
-_0x005a = _0x0010._0x005a._0x0070,
-_0x0060 = _0x001a
-})
-_0x0087._0x00c0 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 66, 117, 116, 116, 111, 110), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(0, 240, 0, 52),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x0058 = _0x0041._0x0059(30, 30, 30),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x00c2 = false,
-_0x0060 = _0x0005._0x00c3
-})
-local _0x0071 = _0x0005:_0x0044(string.char(83, 99, 114, 111, 108, 108, 105, 110, 103, 70, 114, 97, 109, 101), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0063 = 0,
-_0x00c4 = _0x0041._0x0059(),
-_0x00c5 = 0,
-_0x00c6 = _0x0010._0x00c6._0x0029,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0005:_0x0044(string.char(85, 73, 80, 97, 100, 100, 105, 110, 103), {
-_0x00c7 = _0x00c8._0x002d(0, 6),
-_0x0060 = _0x0071
-})
-local _0x0072 = _0x0005:_0x0044(string.char(85, 73, 76, 105, 115, 116, 76, 97, 121, 111, 117, 116), {
-_0x0060 = _0x0071
-})
-_0x0072._0x0074:_0x0075(function()
-_0x0087._0x00c0._0x0055 = _0x002c._0x002d(0, 240, 0, (_0x00be > 4 and (4 * 40) or _0x0072._0x0076._0x0029) + 12)
-_0x0071._0x00c9 = _0x002c._0x002d(0, 0, 0, _0x0072._0x0076._0x0029 + 12)
-end)
-local _0x0094
-_0x001a._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-if _0x0005._0x00ca then
-_0x0005._0x00ca:_0x00cb()
-end
-local _0x0054 = _0x0052._0x00b6
-_0x0087._0x00c0._0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 10)
-_0x0087._0x0008 = true
-_0x0087._0x00c0._0x00c2 = true
-_0x0005._0x00ca = _0x0087
-_0x0071._0x00c5 = 6
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x00c1 = 0, _0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 4)}):_0x0082()
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.4, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081, 0, false, 0.1), {_0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 + 1)}):_0x0082()
-for _0x0022,_0x00cd in next, _0x0071:_0x00ce() do
-if _0x00cd:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.4, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0056 = 0, _0x00d0 = 0}):_0x0082()
-end
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-if _0x0005._0x00ca then
-_0x0005._0x00ca:_0x00cb()
-end
-local _0x0054 = _0x0052._0x00b6
-_0x0087._0x00c0._0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 10)
-_0x0087._0x0008 = true
-_0x0087._0x00c0._0x00c2 = true
-_0x0005._0x00ca = _0x0087
-_0x0071._0x00c5 = 6
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x00c1 = 0, _0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 4)}):_0x0082()
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.4, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081, 0, false, 0.1), {_0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 + 1)}):_0x0082()
-for _0x0022,_0x00cd in next, _0x0071:_0x00ce() do
-if _0x00cd:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.4, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0056 = 0, _0x00d0 = 0}):_0x0082()
-end
-end
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x0087._0x0008 then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-end
-end)
-_0x001a._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = false
-if not _0x0087._0x0008 then
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(40, 40, 40)}):_0x0082()
-end
-end
-end)
-function _0x0087:_0x00d1(_0x004b)
-_0x00be = _0x00be + 1
-local _0x00cd = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 40),
-_0x0062 = _0x0041._0x0059(30, 30, 30),
-_0x0063 = 0,
-_0x0064 = string.char(32, 32, 32, 32) .. _0x004b,
-_0x0065 = 14,
-_0x00d0 = _0x0096._0x0008 and 0 or 1,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x0071
-})
-local _0x0094
-local _0x009c
-_0x00cd._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x009c = true
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x0041._0x0059(10, 10, 10)}):_0x0082()
-_0x0096:_0x00b5(_0x004b)
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x009c = true
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x0041._0x0059(10, 10, 10)}):_0x0082()
-_0x0096:_0x00b5(_0x004b)
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x009c then
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x0041._0x0059(20, 20, 20)}):_0x0082()
-end
-end
-end)
-_0x00cd._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-_0x009c = false
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x0094 and _0x0041._0x0059(20, 20, 20) or _0x0041._0x0059(30, 30, 30)}):_0x0082()
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x009c = false
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x0094 and _0x0041._0x0059(20, 20, 20) or _0x0041._0x0059(30, 30, 30)}):_0x0082()
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = false
-if not _0x009c then
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0062 = _0x0041._0x0059(30, 30, 30)}):_0x0082()
-end
-end
-end)
-end
-if not table.find(_0x0087._0x00d2, _0x0087._0x004b) then
-_0x0087:_0x00d1(_0x0087._0x004b)
-end
-for _0x0022, _0x004b in next, _0x0087._0x00d2 do
-_0x0087:_0x00d1(tostring(_0x004b))
-end
-function _0x0087:_0x00d3(_0x004b)
-for _0x0022,_0x00cd in next, _0x0071:_0x00ce() do
-if _0x00cd:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) and _0x00cd._0x0064 == string.char(9) .. _0x004b then
-_0x00cd:_0x00d4()
-_0x00be = _0x00be - 1
-break
-end
-end
-if _0x0096._0x004b == _0x004b then
-_0x0096:_0x00b5("")
-end
-end
-function _0x0087:_0x00b5(_0x004b)
-_0x0005._0x0006[_0x0096._0x0097] = tostring(_0x004b)
-_0x0096._0x004b = tostring(_0x004b)
-_0x00bf._0x0064 = _0x0096._0x004b
-_0x0096._0x0098(_0x004b)
-end
-function _0x0087:_0x00d9(_0x00da)
-for _0x0022, _0x0023 in next, _0x0071:_0x00ce() do
-if _0x0023:_0x00db(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108)) then
-_0x0023:_0x00d4()
-end
-end
-_0x00be = 0
-_0x0096._0x00d2 = _0x00da or _0x0096._0x00d2
-for _0x0022, _0x004b in next, _0x0096._0x00d2 do
-_0x0096:_0x00d1(tostring(_0x004b))
-end
-if not table.find(_0x0096._0x00d2, _0x0096._0x004b) then
-_0x0096:_0x00b5(_0x0096._0x00d2[1] or "")
-end
-end
-function _0x0087:_0x00cb()
-_0x0005._0x00ca = nil
-_0x0096._0x0008 = false
-_0x0071._0x00c5 = 0
-local _0x0054 = _0x0052._0x00b6
-_0x000d:_0x0044(_0x001a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0094 and _0x0041._0x0059(60, 60, 60) or _0x0041._0x0059(40, 40, 40)}):_0x0082()
-_0x000d:_0x0044(_0x0096._0x00c0, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00c1 = 1, _0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 -10)}):_0x0082()
-for _0x0022,_0x00cd in next, _0x0071:_0x00ce() do
-if _0x00cd:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x00cd, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0056 = 1, _0x00d0 = 1}):_0x0082()
-end
-end
-_0x0040(0.3)
-if not _0x0096._0x0008 then
-_0x0096._0x00c0._0x00c2 = false
-end
-end
-return _0x0087
-end
-local function _0x00dc(_0x0087, _0x004e)
-local _0x0052 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 52),
-_0x0056 = 1,
-_0x0060 = _0x004e._0x0071
-})
-local _0x00dd = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 6, 0, 4),
-_0x0055 = _0x002c._0x002d(1, -12, 1, -10),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(60, 60, 60),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0052
-})
-local _0x001a = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 8, 0, 6),
-_0x0055 = _0x002c._0x002d(1, -16, 1, -14),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.01,
-_0x0060 = _0x0052
-})
-local _0x0061 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 12, 0, 8),
-_0x0055 = _0x002c._0x002d(1, -24, 0, 14),
-_0x0056 = 1,
-_0x0064 = _0x0087._0x0088,
-_0x0065 = 14,
-_0x0066 = _0x0010._0x0066._0x0067,
-_0x0068 = _0x0041._0x0059(100, 100, 100),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x0052
-})
-local _0x00b2 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 66, 111, 120), {
-_0x0027 = _0x002c._0x002d(0, 12, 0, 20),
-_0x0055 = _0x002c._0x002d(1, -24, 0, 24),
-_0x0056 = 1,
-_0x0064 = _0x0087._0x004b,
-_0x0065 = 18,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x00b3 = true,
-_0x0060 = _0x0052
-})
-local _0x0094
-local _0x00de
-_0x0052._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-if not _0x00de then _0x00b2:_0x00df() end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-if not _0x00de then _0x00b2:_0x00df() end
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x00de then
-_0x000d:_0x0044(_0x00dd, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-end
-end
-end)
-_0x0052._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = false
-if not _0x00de then
-_0x000d:_0x0044(_0x00dd, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-end
-end
-end)
-_0x00b2._0x00e0:_0x0075(function()
-_0x00de = true
-_0x000d:_0x0044(_0x00dd, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(255, 65, 65)}):_0x0082()
-end)
-_0x00b2._0x00b9:_0x0075(function(_0x00e1)
-_0x00de = false
-_0x000d:_0x0044(_0x00dd, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(60, 60, 60)}):_0x0082()
-_0x0087:_0x00b5(_0x00b2._0x0064, _0x00e1)
-end)
-function _0x0087:_0x00b5(_0x004b, _0x00e1)
-_0x0005._0x0006[_0x0096._0x0097] = tostring(_0x004b)
-_0x0096._0x004b = tostring(_0x004b)
-_0x00b2._0x0064 = _0x0096._0x004b
-_0x0096._0x0098(_0x004b, _0x00e1)
-end
-end
-local function _0x00e2(_0x0087)
-_0x0087._0x00c0 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 66, 117, 116, 116, 111, 110), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(0, 240, 0, 180),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x0058 = _0x0041._0x0059(30, 30, 30),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0005._0x00c3
-})
-local _0x00e3, _0x00e4, _0x00e5 = _0x0041._0x00e6(_0x0087._0x00e7)
-_0x00e3, _0x00e4, _0x00e5 = _0x00e3 == 0 and 1 or _0x00e3, _0x00e4 + 0.005, _0x00e5 - 0.005
-local _0x00e8
-local _0x00e9
-local _0x00ea = _0x0087._0x00e7
-local _0x00eb = {[1] = _0x0087._0x00e7}
-local _0x00ec = _0x0087._0x00e7
-local _0x00ed
-local _0x00ee
-function _0x0087:_0x00ef(_0x00f0)
-_0x00ea = _0x00f0
-_0x0096._0x00f1._0x0058 = _0x00f0
-_0x00e3, _0x00e4, _0x00e5 = _0x0041._0x00e6(_0x00f0)
-_0x00e3 = _0x00e3 == 0 and 1 or _0x00e3
-_0x0096._0x00f2._0x0062 = _0x0041._0x0042(_0x00e3, 1, 1)
-_0x0096._0x00f3._0x0027 = _0x002c._0x002d(1 - _0x00e3, 0, 0, 0)
-_0x0096._0x00f4._0x0027 = _0x002c._0x002d(_0x00e4, 0, 1 - _0x00e5, 0)
-end
-_0x0087._0x00e3 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x006d = _0x006e._0x002d(0, 1),
-_0x0027 = _0x002c._0x002d(0, 8, 1, -8),
-_0x0055 = _0x002c._0x002d(1, -100, 0, 22),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x00c0
-})
-local _0x00f5 = _0x0005:_0x0044(string.char(85, 73, 71, 114, 97, 100, 105, 101, 110, 116), {
-_0x00f0 = _0x00f6._0x002d({
-_0x00f7._0x002d(0, _0x0041._0x0059(255, 0, 0)),
-_0x00f7._0x002d(0.157, _0x0041._0x0059(255, 0, 255)),
-_0x00f7._0x002d(0.323, _0x0041._0x0059(0, 0, 255)),
-_0x00f7._0x002d(0.488, _0x0041._0x0059(0, 255, 255)),
-_0x00f7._0x002d(0.66, _0x0041._0x0059(0, 255, 0)),
-_0x00f7._0x002d(0.817, _0x0041._0x0059(255, 255, 0)),
-_0x00f7._0x002d(1, _0x0041._0x0059(255, 0, 0)),
-}),
-_0x0060 = _0x0087._0x00e3
-})
-_0x0087._0x00f3 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(1 - _0x00e3, 0, 0, 0),
-_0x0055 = _0x002c._0x002d(0, 2, 1, 0),
-_0x0056 = 1,
-_0x0062 = _0x0041._0x0059(30, 30, 30),
-_0x00f8 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x0087._0x00e3
-})
-_0x0087._0x00e3._0x0078:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 then
-_0x00e8 = true
-_0x002e = (_0x0087._0x00e3._0x00b6._0x002e + _0x0087._0x00e3._0x00b7._0x002e) - _0x0087._0x00e3._0x00b6._0x002e
-_0x002e = (_0x00f9._0x0027._0x002e - _0x0087._0x00e3._0x00b6._0x002e) / _0x002e
-_0x002e = _0x002e < 0 and 0 or _0x002e > 0.995 and 0.995 or _0x002e
-_0x0087:_0x00ef(_0x0041._0x0042(1 - _0x002e, _0x00e4, _0x00e5))
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x00e8 = true
-_0x002e = (_0x0087._0x00e3._0x00b6._0x002e + _0x0087._0x00e3._0x00b7._0x002e) - _0x0087._0x00e3._0x00b6._0x002e
-_0x002e = (_0x00f9._0x0027._0x002e - _0x0087._0x00e3._0x00b6._0x002e) / _0x002e
-_0x002e = _0x002e < 0 and 0 or _0x002e > 0.995 and 0.995 or _0x002e
-_0x0087:_0x00ef(_0x0041._0x0042(1 - _0x002e, _0x00e4, _0x00e5))
-end
-end)
-_0x000f._0x007a:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and _0x00e8 then
-_0x002e = (_0x0087._0x00e3._0x00b6._0x002e + _0x0087._0x00e3._0x00b7._0x002e) - _0x0087._0x00e3._0x00b6._0x002e
-_0x002e = (_0x00f9._0x0027._0x002e - _0x0087._0x00e3._0x00b6._0x002e) / _0x002e
-_0x002e = _0x002e <= 0 and 0 or _0x002e >= 0.995 and 0.995 or _0x002e
-_0x0087:_0x00ef(_0x0041._0x0042(1 - _0x002e, _0x00e4, _0x00e5))
-end
-end)
-_0x0087._0x00e3._0x007c:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 then
-_0x00e8 = false
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x00e8 = false
-end
-end)
-_0x0087._0x00f2 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(0, 8, 0, 8),
-_0x0055 = _0x002c._0x002d(1, -100, 1, -42),
-_0x0056 = 1,
-_0x0062 = _0x0041._0x0042(_0x00e3, 1, 1),
-_0x0063 = 0,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 52, 49, 53, 53, 56, 48, 49, 50, 53, 50),
-_0x00c1 = 1,
-_0x005f = true,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0087._0x00f4 = _0x0005:_0x0044(string.char(70, 114, 97, 109, 101), {
-_0x009b = 3,
-_0x006d = _0x006e._0x002d(0.5, 0.5),
-_0x0027 = _0x002c._0x002d(_0x00e4, 0, 1 - _0x00e5, 0),
-_0x0055 = _0x002c._0x002d(0, 4, 0, 4),
-_0x006f = 45,
-_0x0056 = 1,
-_0x0062 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x0087._0x00f2
-})
-_0x0087._0x00f2._0x0078:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 then
-_0x00e9 = true
-_0x002e = (_0x0087._0x00f2._0x00b6._0x002e + _0x0087._0x00f2._0x00b7._0x002e) - _0x0087._0x00f2._0x00b6._0x002e
-_0x0029 = (_0x0087._0x00f2._0x00b6._0x0029 + _0x0087._0x00f2._0x00b7._0x0029) - _0x0087._0x00f2._0x00b6._0x0029
-_0x002e = (_0x00f9._0x0027._0x002e - _0x0087._0x00f2._0x00b6._0x002e) / _0x002e
-_0x0029 = (_0x00f9._0x0027._0x0029 - _0x0087._0x00f2._0x00b6._0x0029) / _0x0029
-_0x002e = _0x002e <= 0.005 and 0.005 or _0x002e >= 1 and 1 or _0x002e
-_0x0029 = _0x0029 <= 0 and 0 or _0x0029 >= 0.995 and 0.995 or _0x0029
-_0x0087:_0x00ef(_0x0041._0x0042(_0x00e3, _0x002e, 1 - _0x0029))
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x00e9 = true
-_0x002e = (_0x0087._0x00f2._0x00b6._0x002e + _0x0087._0x00f2._0x00b7._0x002e) - _0x0087._0x00f2._0x00b6._0x002e
-_0x0029 = (_0x0087._0x00f2._0x00b6._0x0029 + _0x0087._0x00f2._0x00b7._0x0029) - _0x0087._0x00f2._0x00b6._0x0029
-_0x002e = (_0x00f9._0x0027._0x002e - _0x0087._0x00f2._0x00b6._0x002e) / _0x002e
-_0x0029 = (_0x00f9._0x0027._0x0029 - _0x0087._0x00f2._0x00b6._0x0029) / _0x0029
-_0x002e = _0x002e <= 0.005 and 0.005 or _0x002e >= 1 and 1 or _0x002e
-_0x0029 = _0x0029 <= 0 and 0 or _0x0029 >= 0.995 and 0.995 or _0x0029
-_0x0087:_0x00ef(_0x0041._0x0042(_0x00e3, _0x002e, 1 - _0x0029))
-end
-end)
-_0x000f._0x007a:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and _0x00e9 then
-_0x002e = (_0x0087._0x00f2._0x00b6._0x002e + _0x0087._0x00f2._0x00b7._0x002e) - _0x0087._0x00f2._0x00b6._0x002e
-_0x0029 = (_0x0087._0x00f2._0x00b6._0x0029 + _0x0087._0x00f2._0x00b7._0x0029) - _0x0087._0x00f2._0x00b6._0x0029
-_0x002e = (_0x00f9._0x0027._0x002e - _0x0087._0x00f2._0x00b6._0x002e) / _0x002e
-_0x0029 = (_0x00f9._0x0027._0x0029 - _0x0087._0x00f2._0x00b6._0x0029) / _0x0029
-_0x002e = _0x002e <= 0.005 and 0.005 or _0x002e >= 1 and 1 or _0x002e
-_0x0029 = _0x0029 <= 0 and 0 or _0x0029 >= 0.995 and 0.995 or _0x0029
-_0x0087:_0x00ef(_0x0041._0x0042(_0x00e3, _0x002e, 1 - _0x0029))
-end
-end)
-_0x0087._0x00f2._0x007c:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 then
-_0x00e9 = false
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x00e9 = false
-end
-end)
-_0x0087._0x00f1 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(1, -8, 0, 8),
-_0x0055 = _0x002c._0x002d(0, -80, 0, 80),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x00ea,
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0087._0x00fa = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(1, -8, 0, 92),
-_0x0055 = _0x002c._0x002d(0, -80, 0, 18),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0087._0x00fb = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0064 = string.char(82, 101, 115, 101, 116),
-_0x00d0 = 1,
-_0x0066 = _0x0010._0x0066._0x00fc,
-_0x0065 = 15,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x0087._0x00fa
-})
-_0x0087._0x00fa._0x0078:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 and not _0x00ed then
-_0x00eb = {_0x00ec}
-_0x0087:_0x00fd(_0x00ec)
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 and not _0x00ed then
-_0x00eb = {_0x00ec}
-_0x0087:_0x00fd(_0x00ec)
-end
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x00fa, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(10, 10, 10)}):_0x0082()
-end
-end)
-_0x0087._0x00fa._0x007c:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x00fa, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(20, 20, 20)}):_0x0082()
-end
-end)
-_0x0087._0x00fe = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(1, -8, 0, 112),
-_0x0055 = _0x002c._0x002d(0, -80, 0, 18),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0087._0x00ff = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0064 = string.char(85, 110, 100, 111),
-_0x00d0 = 1,
-_0x0066 = _0x0010._0x0066._0x00fc,
-_0x0065 = 15,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x0087._0x00fe
-})
-_0x0087._0x00fe._0x0078:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 and not _0x00ed then
-local _0x0100 = #_0x00eb == 1 and 0 or 1
-_0x0087:_0x00fd(_0x00eb[#_0x00eb - _0x0100])
-if #_0x00eb ~= 1 then
-table.remove(_0x00eb, #_0x00eb)
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 and not _0x00ed then
-local _0x0100 = #_0x00eb == 1 and 0 or 1
-_0x0087:_0x00fd(_0x00eb[#_0x00eb - _0x0100])
-if #_0x00eb ~= 1 then
-table.remove(_0x00eb, #_0x00eb)
-end
-end
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x00fe, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(10, 10, 10)}):_0x0082()
-end
-end)
-_0x0087._0x00fe._0x007c:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x00fe, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(20, 20, 20)}):_0x0082()
-end
-end)
-_0x0087._0x0101 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(1, -8, 0, 132),
-_0x0055 = _0x002c._0x002d(0, -80, 0, 18),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0087._0x0102 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0064 = string.char(83, 101, 116),
-_0x00d0 = 1,
-_0x0066 = _0x0010._0x0066._0x00fc,
-_0x0065 = 15,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x0087._0x0101
-})
-_0x0087._0x0101._0x0078:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 and not _0x00ed then
-table.insert(_0x00eb, _0x00ea)
-_0x0087:_0x00fd(_0x00ea)
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 and not _0x00ed then
-table.insert(_0x00eb, _0x00ea)
-_0x0087:_0x00fd(_0x00ea)
-end
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x0101, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(10, 10, 10)}):_0x0082()
-end
-end)
-_0x0087._0x0101._0x007c:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x0101, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(20, 20, 20)}):_0x0082()
-end
-end)
-_0x0087._0x003a = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0027 = _0x002c._0x002d(1, -8, 0, 152),
-_0x0055 = _0x002c._0x002d(0, -80, 0, 18),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x00c1 = 1,
-_0x0058 = _0x0041._0x0059(20, 20, 20),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x00c0
-})
-_0x0087._0x0103 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x009b = 3,
-_0x0055 = _0x002c._0x002d(1, 0, 1, 0),
-_0x0056 = 1,
-_0x0064 = string.char(82, 97, 105, 110, 98, 111, 119),
-_0x00d0 = 1,
-_0x0066 = _0x0010._0x0066._0x00fc,
-_0x0065 = 15,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x0060 = _0x0087._0x003a
-})
-_0x0087._0x003a._0x0078:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0002 then
-_0x00ed = not _0x00ed
-if _0x00ed then
-_0x00ee = _0x000a._0x00a8:_0x0075(function()
-_0x0087:_0x00fd(_0x003d)
-_0x0087._0x0103._0x0068 = _0x003d
-end)
-else
-_0x00ee:_0x00a9()
-_0x0087:_0x00fd(_0x00eb[#_0x00eb])
-_0x0087._0x0103._0x0068 = _0x0041._0x0059(255, 255, 255)
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-_0x00ed = not _0x00ed
-if _0x00ed then
-_0x00ee = _0x000a._0x00a8:_0x0075(function()
-_0x0087:_0x00fd(_0x003d)
-_0x0087._0x0103._0x0068 = _0x003d
-end)
-else
-_0x00ee:_0x00a9()
-_0x0087:_0x00fd(_0x00eb[#_0x00eb])
-_0x0087._0x0103._0x0068 = _0x0041._0x0059(255, 255, 255)
-end
-end
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x003a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(10, 10, 10)}):_0x0082()
-end
-end)
-_0x0087._0x003a._0x007c:_0x0075(function(_0x00f9)
-if _0x00f9._0x0011 == _0x0010._0x0011._0x007b and not _0x0014 then
-_0x000d:_0x0044(_0x0087._0x003a, _0x007d._0x002d(0.2, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(20, 20, 20)}):_0x0082()
-end
-end)
-return _0x0087
-end
-local function _0x0104(_0x0087, _0x004e, _0x00bd)
-_0x0087._0x0052 = _0x0005:_0x0044(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108), {
-_0x0053 = _0x0087._0x0054,
-_0x0055 = _0x002c._0x002d(1, 0, 0, 31),
-_0x0056 = 1,
-_0x0064 = string.char(32) .. _0x0087._0x0088,
-_0x0065 = 17,
-_0x0066 = _0x0010._0x0066._0x0089,
-_0x0068 = _0x0041._0x0059(255, 255, 255),
-_0x008a = _0x0010._0x008a._0x008b,
-_0x0060 = _0x004e._0x0071
-})
-local _0x0105 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(1, -6, 0, 4),
-_0x0055 = _0x002c._0x002d(-1, 10, 1, -10),
-_0x006a = _0x0010._0x006a._0x006b,
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0041._0x0059(100, 100, 100),
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0087._0x0052
-})
-_0x0087._0x0106 = _0x0005:_0x0044(string.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108), {
-_0x0027 = _0x002c._0x002d(0, 2, 0, 2),
-_0x0055 = _0x002c._0x002d(1, -4, 1, -4),
-_0x0056 = 1,
-_0x0057 = string.char(114, 98, 120, 97, 115, 115, 101, 116, 105, 100, 58, 47, 47, 51, 53, 55, 48, 54, 57, 53, 55, 56, 55),
-_0x0058 = _0x0087._0x00e7,
-_0x005a = _0x0010._0x005a._0x005b,
-_0x005c = _0x005d._0x002d(100, 100, 100, 100),
-_0x005e = 0.02,
-_0x0060 = _0x0105
-})
-local _0x0094
-_0x0087._0x0052._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-if not _0x0087._0x00c0 then _0x00e2(_0x0087) end
-if _0x0005._0x00ca then
-_0x0005._0x00ca:_0x00cb()
-end
-local _0x0054 = _0x0087._0x0052._0x00b6
-_0x0087._0x00c0._0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 10)
-_0x0087._0x0008 = true
-_0x0087._0x00c0._0x00c2 = true
-_0x0005._0x00ca = _0x0087
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x00c1 = 0, _0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 4)}):_0x0082()
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.4, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081, 0, false, 0.1), {_0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 + 1)}):_0x0082()
-_0x000d:_0x0044(_0x0087._0x00f2, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x0056 = 0}):_0x0082()
-for _0x0022,_0x0107 in next, _0x0087._0x00c0:_0x0108() do
-if _0x0107:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00d0 = 0}):_0x0082()
-elseif _0x0107:_0x00cf.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00c1 = 0}):_0x0082()
-elseif _0x0107:_0x00cf.char(70, 114, 97, 109, 101) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0056 = 0}):_0x0082()
-end
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-if not _0x0087._0x00c0 then _0x00e2(_0x0087) end
-if _0x0005._0x00ca then
-_0x0005._0x00ca:_0x00cb()
-end
-local _0x0054 = _0x0087._0x0052._0x00b6
-_0x0087._0x00c0._0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 10)
-_0x0087._0x0008 = true
-_0x0087._0x00c0._0x00c2 = true
-_0x0005._0x00ca = _0x0087
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x00c1 = 0, _0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 4)}):_0x0082()
-_0x000d:_0x0044(_0x0087._0x00c0, _0x007d._0x002d(0.4, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081, 0, false, 0.1), {_0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 + 1)}):_0x0082()
-_0x000d:_0x0044(_0x0087._0x00f2, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x0056 = 0}):_0x0082()
-for _0x0022,_0x0107 in next, _0x0087._0x00c0:_0x0108() do
-if _0x0107:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00d0 = 0}):_0x0082()
-elseif _0x0107:_0x00cf.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00c1 = 0}):_0x0082()
-elseif _0x0107:_0x00cf.char(70, 114, 97, 109, 101) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0056 = 0}):_0x0082()
-end
-end
-end
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x0087._0x0008 then
-_0x000d:_0x0044(_0x0105, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(140, 140, 140)}):_0x0082()
-end
-end
-end)
-_0x0087._0x0052._0x007c:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0010._0x0011._0x007b then
-_0x0094 = true
-if not _0x0087._0x0008 then
-_0x000d:_0x0044(_0x0105, _0x007d._0x002d(0.1, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0058 = _0x0041._0x0059(100, 100, 100)}):_0x0082()
-end
-end
-end)
-function _0x0087:_0x00fd(_0x0109)
-if _0x0096._0x00c0 then
-_0x0096:_0x00ef(_0x0109)
-end
-_0x0096._0x0106._0x0058 = _0x0109
-_0x0005._0x0006[_0x0096._0x0097] = _0x0109
-_0x0096._0x00e7 = _0x0109
-_0x0096._0x0098(_0x0109)
-end
-function _0x0087:_0x00cb()
-_0x0005._0x00ca = nil
-_0x0096._0x0008 = false
-local _0x0054 = _0x0096._0x0052._0x00b6
-_0x000d:_0x0044(_0x0096._0x00c0, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00c1 = 1, _0x0027 = _0x002c._0x002d(0, _0x0054._0x002e - 5, 0, _0x0054._0x0029 - 10)}):_0x0082()
-_0x000d:_0x0044(_0x0096._0x00f2, _0x007d._0x002d(0.3, _0x0010._0x007e._0x00cc, _0x0010._0x0080._0x0081), {_0x0056 = 1}):_0x0082()
-for _0x0022,_0x0107 in next, _0x0096._0x00c0:_0x0108() do
-if _0x0107:_0x00cf.char(84, 101, 120, 116, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00d0 = 1}):_0x0082()
-elseif _0x0107:_0x00cf.char(73, 109, 97, 103, 101, 76, 97, 98, 101, 108) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x00c1 = 1}):_0x0082()
-elseif _0x0107:_0x00cf.char(70, 114, 97, 109, 101) then
-_0x000d:_0x0044(_0x0107, _0x007d._0x002d(0.3, _0x0010._0x007e._0x007f, _0x0010._0x0080._0x0081), {_0x0056 = 1}):_0x0082()
-end
-end
-_0x0099(0.3, function()
-if not _0x0096._0x0008 then
-_0x0096._0x00c0._0x00c2 = false
-end
-end)
-end
-end
-local function _0x010a(_0x0087, _0x00bd)
-for _0x0022,_0x010b in next, _0x0087._0x0077 do
-if _0x010b.type == string.char(108, 97, 98, 101, 108) then
-_0x0086(_0x010b, _0x0087)
-elseif _0x010b.type == string.char(116, 111, 103, 103, 108, 101) then
-_0x008e(_0x010b, _0x0087)
-elseif _0x010b.type == string.char(98, 117, 116, 116, 111, 110) then
-_0x009a(_0x010b, _0x0087)
-elseif _0x010b.type == string.char(108, 105, 115, 116) then
-_0x00bc(_0x010b, _0x0087, _0x00bd)
-elseif _0x010b.type == string.char(98, 111, 120) then
-_0x00dc(_0x010b, _0x0087)
-elseif _0x010b.type == string.char(98, 105, 110, 100) then
-_0x009d(_0x010b, _0x0087)
-elseif _0x010b.type == string.char(115, 108, 105, 100, 101, 114) then
-_0x00ad(_0x010b, _0x0087)
-elseif _0x010b.type == string.char(99, 111, 108, 111, 114) then
-_0x0104(_0x010b, _0x0087, _0x00bd)
-elseif _0x010b.type == string.char(102, 111, 108, 100, 101, 114) then
-_0x010b:_0x010c()
-end
-end
-end
-local function _0x010d(_0x004e)
-function _0x004e:_0x010e(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087.type = string.char(108, 97, 98, 101, 108)
-_0x0087._0x0054 = #_0x0096._0x0077
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x010f(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087._0x0090 = _0x0047(_0x0087._0x0090) == string.char(98, 111, 111, 108, 101, 97, 110) and _0x0087._0x0090 or false
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087.type = string.char(116, 111, 103, 103, 108, 101)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-_0x0005._0x0006[_0x0087._0x0097] = _0x0087._0x0090
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0110(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087.type = string.char(98, 117, 116, 116, 111, 110)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0111(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087._0x00a1 = (_0x0087._0x00a1 and _0x0087._0x00a1._0x00a6) or _0x0087._0x00a1 or string.char(70)
-_0x0087._0x00a7 = _0x0047(_0x0087._0x00a7) == string.char(98, 111, 111, 108, 101, 97, 110) and _0x0087._0x00a7 or false
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087.type = string.char(98, 105, 110, 100)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-_0x0005._0x0006[_0x0087._0x0097] = _0x0087._0x00a1
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0112(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087.min = _0x0047(_0x0087.min) == string.char(110, 117, 109, 98, 101, 114) and _0x0087.min or 0
-_0x0087.max = _0x0047(_0x0087.max) == string.char(110, 117, 109, 98, 101, 114) and _0x0087.max or 0
-_0x0087._0x0113 = _0x0047(_0x0087._0x0113) == string.char(98, 111, 111, 108, 101, 97, 110) and _0x0087._0x0113 or false
-_0x0087._0x004b = math._0x00bb(_0x0047(_0x0087._0x004b) == string.char(110, 117, 109, 98, 101, 114) and _0x0087._0x004b or _0x0087.min, _0x0087.min, _0x0087.max)
-_0x0087._0x0114 = _0x0047(_0x0087._0x0114) == string.char(110, 117, 109, 98, 101, 114) and _0x0087._0x0114 or _0x0087.max
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087._0x00ba = _0x0047(_0x0087._0x004b) == string.char(110, 117, 109, 98, 101, 114) and _0x0087._0x00ba or 1
-_0x0087.type = string.char(115, 108, 105, 100, 101, 114)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-_0x0005._0x0006[_0x0087._0x0097] = _0x0087._0x004b
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0115(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087._0x00d2 = _0x0047(_0x0087._0x00d2) == string.char(116, 97, 98, 108, 101) and _0x0087._0x00d2 or {}
-_0x0087._0x004b = tostring(_0x0087._0x004b or _0x0087._0x00d2[1] or "")
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087._0x0008 = false
-_0x0087.type = string.char(108, 105, 115, 116)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-_0x0005._0x0006[_0x0087._0x0097] = _0x0087._0x004b
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0116(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087._0x004b = tostring(_0x0087._0x004b or "")
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087.type = string.char(98, 111, 120)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-_0x0005._0x0006[_0x0087._0x0097] = _0x0087._0x004b
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0117(_0x0087)
-_0x0087 = _0x0047(_0x0087) == string.char(116, 97, 98, 108, 101) and _0x0087 or {}
-_0x0087._0x0088 = tostring(_0x0087._0x0088)
-_0x0087._0x00e7 = _0x0047(_0x0087._0x00e7) == string.char(116, 97, 98, 108, 101) and _0x0041._0x002d(tonumber(_0x0087._0x00e7[1]), tonumber(_0x0087._0x00e7[2]), tonumber(_0x0087._0x00e7[3])) or _0x0087._0x00e7 or _0x0041._0x002d(255, 255, 255)
-_0x0087._0x0098 = _0x0047(_0x0087._0x0098) == string.char(102, 117, 110, 99, 116, 105, 111, 110) and _0x0087._0x0098 or function() end
-_0x0087._0x0008 = false
-_0x0087.type = string.char(99, 111, 108, 111, 114)
-_0x0087._0x0054 = #_0x0096._0x0077
-_0x0087._0x0097 = _0x0087._0x0097 or _0x0087._0x0088
-_0x0005._0x0006[_0x0087._0x0097] = _0x0087._0x00e7
-table.insert(_0x0096._0x0077, _0x0087)
-return _0x0087
-end
-function _0x004e:_0x0118(_0x0061)
-local _0x0087 = {}
-_0x0087._0x0061 = tostring(_0x0061)
-_0x0087._0x0077 = {}
-_0x0087._0x0008 = false
-_0x0087.type = string.char(102, 111, 108, 100, 101, 114)
-_0x0087._0x0054 = #_0x0096._0x0077
-table.insert(_0x0096._0x0077, _0x0087)
-_0x010d(_0x0087)
-function _0x0087:_0x010c()
-_0x004c(_0x0096._0x0061, _0x004e._0x0071, _0x0096, true)
-_0x010a(_0x0096, _0x004e)
-end
-return _0x0087
-end
-end
-function _0x0005:_0x0119(_0x0061)
-local _0x011a = {_0x0061 = tostring(_0x0061), _0x0077 = {}, _0x0008 = true, _0x011b = true, _0x010c = false, _0x0054 = #_0x0096._0x0007}
-_0x010d(_0x011a)
-table.insert(_0x0005._0x0007, _0x011a)
-return _0x011a
-end
-local _0x011c
-function _0x0005:_0x011d()
-_0x0096._0x00c3 = _0x0096._0x00c3 or _0x0096:_0x0044(string.char(83, 99, 114, 101, 101, 110, 71, 117, 105))
-if _0x011e and _0x011e._0x011f then
-_0x011e._0x011f(_0x0096._0x00c3)
-elseif _0x0120 then
-_0x0120(_0x0096._0x00c3)
-elseif _0x0121 then
-_0x0121(_0x0096._0x00c3)
-else
-_0x000b:_0x000c.char(80, 108, 97, 121, 101, 114, 115)._0x0122:_0x0123(string.char(69, 114, 114, 111, 114, 58, 32, 112, 114, 111, 116, 101, 99, 116, 95, 103, 117, 105, 32, 102, 117, 110, 99, 116, 105, 111, 110, 32, 110, 111, 116, 32, 102, 111, 117, 110, 100))
-return
-end
-_0x0096._0x00c3._0x0060 = _0x000b:_0x000c.char(67, 111, 114, 101, 71, 117, 105)
-_0x0096._0x00c3._0x0124 = true
-_0x0096._0x00c3._0x00a6 = string.char(84, 111, 114, 97, 83, 99, 114, 105, 112, 116)
-for _0x0022, _0x011a in next, _0x0096._0x0007 do
-if _0x011a._0x011b and not _0x011a._0x010c then
-_0x011a._0x010c = true
-_0x004c(_0x011a._0x0061, _0x0096._0x00c3, _0x011a)
-_0x010a(_0x011a)
-end
-end
-return _0x0096._0x00c3
-end
-function _0x0005:_0x00cb()
-if _0x0047(_0x0096._0x00c3) ~= string.char(73, 110, 115, 116, 97, 110, 99, 101) then end
-_0x0096._0x0008 = not _0x0096._0x0008
-if _0x0096._0x00ca then
-_0x0096._0x00ca:_0x00cb()
-end
-for _0x0022, _0x011a in next, _0x0096._0x0007 do
-if _0x011a._0x0052 then
-_0x011a._0x0052._0x00c2 = _0x0096._0x0008
-end
-end
-end
-_0x000f._0x0078:_0x0075(function(_0x0025)
-if _0x0025._0x0011 == _0x0002 then
-if _0x0005._0x00ca then
-if _0x0025._0x0027._0x002e < _0x0005._0x00ca._0x00c0._0x00b6._0x002e or _0x0025._0x0027._0x0029 < _0x0005._0x00ca._0x00c0._0x00b6._0x0029 then
-_0x0005._0x00ca:_0x00cb()
-end
-end
-if _0x0005._0x00ca then
-if _0x0025._0x0027._0x002e > _0x0005._0x00ca._0x00c0._0x00b6._0x002e + _0x0005._0x00ca._0x00c0._0x00b7._0x002e or _0x0025._0x0027._0x0029 > _0x0005._0x00ca._0x00c0._0x00b6._0x0029 + _0x0005._0x00ca._0x00c0._0x00b7._0x0029 then
-_0x0005._0x00ca:_0x00cb()
-end
-end
-elseif _0x0025._0x0011 == _0x0010._0x0011._0x0079 then
-if _0x0005._0x00ca then
-if _0x0025._0x0027._0x002e < _0x0005._0x00ca._0x00c0._0x00b6._0x002e or _0x0025._0x0027._0x0029 < _0x0005._0x00ca._0x00c0._0x00b6._0x0029 then
-_0x0005._0x00ca:_0x00cb()
-end
-end
-if _0x0005._0x00ca then
-if _0x0025._0x0027._0x002e > _0x0005._0x00ca._0x00c0._0x00b6._0x002e + _0x0005._0x00ca._0x00c0._0x00b7._0x002e or _0x0025._0x0027._0x0029 > _0x0005._0x00ca._0x00c0._0x00b6._0x0029 + _0x0005._0x00ca._0x00c0._0x00b7._0x0029 then
-_0x0005._0x00ca:_0x00cb()
-end
-end
-end
-end)
-_0x000f._0x007a:_0x0075(function(_0x0025)
-if _0x0025 == _0x0015 and _0x0014 then
-_0x0024(_0x0025)
-end
-end)
-return _0x0005
+ 
+return library
