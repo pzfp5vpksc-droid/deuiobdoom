@@ -194,47 +194,23 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 end
 	
 local function createLabel(option, parent)
-
 	local main = library:Create("TextLabel", {
 		LayoutOrder = option.position,
 		Size = UDim2.new(1, 0, 0, 26),
 		BackgroundTransparency = 1,
-		Text = " " .. tostring(option.text or ""),
+		Text = " " .. option.text,
 		TextSize = 17,
 		Font = Enum.Font.GothamBlack,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = parent.content
 	})
-
-	-- METHOD
-	function option:SetText(text)
-		self.text = text
-		main.Text = " " .. tostring(text)
-	end
-
-	setmetatable(option, {
-		__newindex = function(t, i, v)
-
-			if i == "Text" or i == "text" then
-				option:SetText(v) -- 🔥 FIX: direct reference, not t:SetText
-				return
-			end
-
-			rawset(t, i, v)
-		end,
-
-		__index = function(t, i)
-			if i == "Text" then
-				return t.text
-			end
+	
+	setmetatable(option, {__newindex = function(t, i, v)
+		if i == "Text" then
+			main.Text = " " .. tostring(v)
 		end
-	})
-
-	-- initial sync
-	if option.text then
-		main.Text = " " .. tostring(option.text)
-	end
+	end})
 end
 
 function createToggle(option, parent)
@@ -1637,41 +1613,29 @@ local function loadOptions(option, holder)
 end
 
 local function getFnctions(parent)
-
 	function parent:AddLabel(option)
-
 		option = typeof(option) == "table" and option or {}
-
-		option.text = tostring(option.text or "")
+		option.text = tostring(option.text)
 		option.type = "label"
 		option.position = #self.options
-
 		table.insert(self.options, option)
-
-		-- create UI element
-		local main = library:Create("TextLabel", {
-			LayoutOrder = option.position,
-			Size = UDim2.new(1, 0, 0, 26),
-			BackgroundTransparency = 1,
-			Text = " " .. option.text,
-			TextSize = 17,
-			Font = Enum.Font.GothamBlack,
-			TextColor3 = Color3.fromRGB(255, 255, 255),
-			TextXAlignment = Enum.TextXAlignment.Left,
-			Parent = self.content
-		})
-
-		-- wrapper object
-		local label = {}
-
-		function label:SetText(text)
-			option.text = text
-			main.Text = " " .. tostring(text)
-		end
-
-		return label
+		
+		return option
 	end
-end
+	
+	function parent:AddToggle(option)
+		option = typeof(option) == "table" and option or {}
+		option.text = tostring(option.text)
+		option.state = typeof(option.state) == "boolean" and option.state or false
+		option.callback = typeof(option.callback) == "function" and option.callback or function() end
+		option.type = "toggle"
+		option.position = #self.options
+		option.flag = option.flag or option.text
+		library.flags[option.flag] = option.state
+		table.insert(self.options, option)
+		
+		return option
+	end
 	
 	function parent:AddButton(option)
 		option = typeof(option) == "table" and option or {}
