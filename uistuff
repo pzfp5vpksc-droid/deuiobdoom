@@ -1,4 +1,4 @@
-local library = {flags = {}, windows = {}, open = true}
+local Library = {flags = {}, windows = {}, open = true}
 
 --Services
 local runService = game:GetService"RunService"
@@ -42,7 +42,7 @@ spawn(function()
 	end
 end)
 
-function library:Create(class, properties)
+function Library:Create(class, properties)
 	properties = typeof(properties) == "table" and properties or {}
 	local inst = Instance.new(class)
 	for property, value in next, properties do
@@ -53,7 +53,7 @@ end
 
 local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	local size = subHolder and 34 or 40
-	parentTable.main = library:Create("ImageButton", {
+	parentTable.main = Library:Create("ImageButton", {
 		LayoutOrder = subHolder and parentTable.position or 0,
 		Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20),
 		Size = UDim2.new(0, 230, 0, size),
@@ -69,7 +69,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	
 	local round
 	if not subHolder then
-		round = library:Create("ImageLabel", {
+		round = Library:Create("ImageLabel", {
 			Size = UDim2.new(1, 0, 0, size),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://3570695787",
@@ -81,7 +81,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		})
 	end
 	
-	local title = library:Create("TextLabel", {
+	local title = Library:Create("TextLabel", {
 		Size = UDim2.new(1, 0, 0, size),
 		BackgroundTransparency = subHolder and 0 or 1,
 		BackgroundColor3 = Color3.fromRGB(10, 10, 10),
@@ -101,7 +101,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		Parent = title
 	})
 	
-	local close = library:Create("ImageLabel", {
+	local close = Library:Create("ImageLabel", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		Size = UDim2.new(1, -size - 10, 1, -size - 10),
@@ -206,9 +206,8 @@ local function createLabel(option, parent)
 		Parent = parent.content
 	})
 
-	local object = option
-
-	setmetatable(object, {
+	-- PROPERTY UPDATE (optional legacy system)
+	setmetatable(option, {
 		__newindex = function(t, i, v)
 			if i == "Text" then
 				main.Text = " " .. tostring(v)
@@ -216,7 +215,12 @@ local function createLabel(option, parent)
 		end
 	})
 
-	return object
+	-- ✅ THIS IS YOUR NEW METHOD
+	option.SetText = function(_, v)
+		main.Text = " " .. tostring(v)
+	end
+
+	return option
 end
 
 function createToggle(option, parent)
