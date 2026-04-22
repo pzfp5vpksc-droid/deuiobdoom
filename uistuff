@@ -207,19 +207,17 @@ local function createLabel(option, parent)
 		Parent = parent.content
 	})
 
-	-- METHOD: SetText
+	-- METHOD
 	function option:SetText(text)
 		self.text = text
 		main.Text = " " .. tostring(text)
 	end
 
-	-- OPTIONAL: allow option.Text = "abc"
-	-- and option.text = "abc"
 	setmetatable(option, {
 		__newindex = function(t, i, v)
 
 			if i == "Text" or i == "text" then
-				t:SetText(v)
+				option:SetText(v) -- 🔥 FIX: direct reference, not t:SetText
 				return
 			end
 
@@ -233,7 +231,7 @@ local function createLabel(option, parent)
 		end
 	})
 
-	-- sync initial value properly
+	-- initial sync
 	if option.text then
 		main.Text = " " .. tostring(option.text)
 	end
