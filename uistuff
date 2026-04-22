@@ -194,11 +194,12 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 end
 	
 local function createLabel(option, parent)
+
 	local main = library:Create("TextLabel", {
 		LayoutOrder = option.position,
 		Size = UDim2.new(1, 0, 0, 26),
 		BackgroundTransparency = 1,
-		Text = " " .. option.text,
+		Text = " " .. tostring(option.text or ""),
 		TextSize = 17,
 		Font = Enum.Font.GothamBlack,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -206,16 +207,36 @@ local function createLabel(option, parent)
 		Parent = parent.content
 	})
 
-    function option:SetText(text)
-	main.Text = " " .. tostring(text)
-	self.text = text
-end
+	-- METHOD: SetText
+	function option:SetText(text)
+		self.text = text
+		main.Text = " " .. tostring(text)
+	end
 
-	setmetatable(option, {__newindex = function(t, i, v)
-		if i == "Text" then
-			main.Text = " " .. tostring(v)
+	-- OPTIONAL: allow option.Text = "abc"
+	-- and option.text = "abc"
+	setmetatable(option, {
+		__newindex = function(t, i, v)
+
+			if i == "Text" or i == "text" then
+				t:SetText(v)
+				return
+			end
+
+			rawset(t, i, v)
+		end,
+
+		__index = function(t, i)
+			if i == "Text" then
+				return t.text
+			end
 		end
-	end})
+	})
+
+	-- sync initial value properly
+	if option.text then
+		main.Text = " " .. tostring(option.text)
+	end
 end
 
 function createToggle(option, parent)
