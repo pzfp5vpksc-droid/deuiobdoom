@@ -671,21 +671,28 @@ local function createSlider(option, parent)
 		option:SetValue(tonumber(inputvalue.Text) or option.value)
 	end)
 
-	function option:SetValue(value)
-		value = round(value, option.float)
-		value = math.clamp(value, self.min, self.max)
-		circle:TweenPosition(UDim2.new((value - self.min) / (self.max - self.min), 0, 0.5, 0), "Out", "Quad", 0.1, true)
-		if self.min >= 0 then
-			fill:TweenSize(UDim2.new((value - self.min) / (self.max - self.min), 0, 1, 0), "Out", "Quad", 0.1, true)
-		else
-			fill:TweenPosition(UDim2.new((0 - self.min) / (self.max - self.min), 0, 0, 0), "Out", "Quad", 0.1, true)
-			fill:TweenSize(UDim2.new(value / (self.max - self.min), 0, 1, 0), "Out", "Quad", 0.1, true)
-		end
-		library.flags[self.flag] = value
-		self.value = value
-		inputvalue.Text = value
-		self.callback(value)
-	end
+function option:SetValue(value)
+    if self.multi then
+        self.value[value] = not self.value[value]
+
+        local selected = {}
+
+        for k, v in pairs(self.value) do
+            if v then
+                table.insert(selected, k)
+            end
+        end
+
+        listvalue.Text = #selected > 0 and table.concat(selected, ", ") or "None"
+
+        library.flags[self.flag] = self.value
+        self.callback(self.value)
+    else
+        library.flags[self.flag] = tostring(value)
+        self.value = tostring(value)
+        listvalue.Text = self.value
+        self.callback(value)
+    end
 end
 
 local function createList(option, parent, holder)
@@ -726,7 +733,7 @@ local function createList(option, parent, holder)
 		Position = UDim2.new(0, 12, 0, 20),
 		Size = UDim2.new(1, -24, 0, 24),
 		BackgroundTransparency = 1,
-		Text = option.value,
+		Text = option.multi and "" or tostring(option.value),
 		TextSize = 18,
 		Font = Enum.Font.GothamBlack,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -892,9 +899,12 @@ local function createList(option, parent, holder)
 		end)
 	end
 
-	if not table.find(option.values, option.value) then
-		option:AddValue(option.value)
-	end
+if not option.multi then
+    if not table.find(option.values, option.value) then
+        option:AddValue(option.value)
+    end
+end
+
 	
 	for _, value in next, option.values do
 		option:AddValue(tostring(value))
